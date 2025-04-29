@@ -1,4 +1,4 @@
-// tests/resetpassword.integration.spec.js
+// imports nécessaires pour les tests et mocks
 import { describe, it, beforeEach, expect, vi } from 'vitest';
 import request from 'supertest';
 import express from 'express';
@@ -31,21 +31,21 @@ vi.mock('jsonwebtoken', () => ({
 import jwt from 'jsonwebtoken';
 
 // ─── 4) MOCK Utilisateur.update ────────────────────────────────────────────
-vi.mock('../src/models/utilisateur.js', () => ({
+vi.mock('../../src/models/utilisateur.js', () => ({
   __esModule: true,
   default: { update: vi.fn() },
 }));
-import Utilisateur from '../src/models/utilisateur.js';
+import Utilisateur from '../../src/models/utilisateur.js';
 
 // ─── 5) MOCK VerificationCode.destroy ───────────────────────────────────────
-vi.mock('../src/models/VerificationCode.js', () => ({
+vi.mock('../../src/models/VerificationCode.js', () => ({
   __esModule: true,
   default: { destroy: vi.fn() },
 }));
-import VerificationCode from '../src/models/VerificationCode.js';
+import VerificationCode from '../../src/models/VerificationCode.js';
 
 // ─── 6) IMPORT controller APRÈS les mocks ──────────────────────────────────
-import { resetpassword } from '../src/controllers/authControllers.js'; // ajuster le chemin
+import { resetpassword } from '../../src/controllers/authControllers.js'; // ajuster le chemin
 
 // ─── 7) Créer une mini‐app Express pour l’endpoint ─────────────────────────
 function createApp() {
@@ -59,8 +59,9 @@ function createApp() {
 describe('POST /auth/resetpassword — intégration avec Supertest', () => {
   let app;
 
+  // Avant chaque test, initialisation de l'application et des mocks
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.clearAllMocks(); // Réinitialisation de tous les mocks
     app = createApp();
     // validation OK par défaut
     validationResult.mockReturnValue({ isEmpty: () => true, array: () => [] });
@@ -68,6 +69,7 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     bcrypt.hash.mockResolvedValue('HASHED_PWD');
   });
 
+  // Test 1: Vérification de l'échec de la validation des données
   it('400 si express-validator détecte une erreur', async () => {
     validationResult.mockReturnValue({ isEmpty: () => false, array: () => ['err'] });
 
@@ -79,6 +81,7 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     expect(res.body.msg).toBe('Erreur de validation des données.');
   });
 
+  // Test 2: Vérification de l'absence de cookie resetToken
   it('401 si pas de cookie resetToken', async () => {
     // pas de Cookie header
     const res = await request(app)
@@ -89,6 +92,7 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     expect(res.body.msg).toBe('Aucun token trouvé pour réinitialiser le mot de passe.');
   });
 
+  // Test 3: Vérification d'un token invalide
   it('403 si token invalide', async () => {
     jwt.verify.mockImplementation(() => { throw new Error('bad token'); });
 
@@ -101,8 +105,8 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     expect(res.body.msg).toBe('Token invalide ou expiré.');
   });
 
+  // Test 4: Vérification de l'absence d'utilisateur lors de la mise à jour
   it('404 si Utilisateur.update ne trouve pas d’utilisateur', async () => {
-    // token valide
     jwt.verify.mockReturnValue({ cin: 'U1' });
     Utilisateur.update.mockResolvedValue([0]); // zéro lignes mises à jour
 
@@ -118,6 +122,7 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     expect(res.get('Set-Cookie').some(c => c.startsWith('resetToken=;'))).toBe(true);
   });
 
+  // Test 5: Vérification du succès de la réinitialisation du mot de passe
   it('200 si tout est OK', async () => {
     jwt.verify.mockReturnValue({ cin: 'U1' });
     Utilisateur.update.mockResolvedValue([1]);  // mise à jour OK
@@ -144,6 +149,7 @@ describe('POST /auth/resetpassword — intégration avec Supertest', () => {
     expect(res.get('Set-Cookie').some(c => c.startsWith('resetToken=;'))).toBe(true);
   });
 
+  // Test 6: Vérification d'une erreur interne
   it('500 si exception interne', async () => {
     jwt.verify.mockReturnValue({ cin: 'U1' });
     Utilisateur.update.mockRejectedValue(new Error('DB down'));

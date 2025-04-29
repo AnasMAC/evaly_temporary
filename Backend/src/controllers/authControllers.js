@@ -1,5 +1,5 @@
 import { validationResult, matchedData } from "express-validator";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { generateAccessToken, generateRefreshToken } from "../assets/tokens.js";
 import { sendVerificationEmail } from "../assets/email.js";
@@ -29,7 +29,10 @@ export const login = async (req, res) => {
     const match = await bcrypt.compare(pwd, user.pwd);
     if (!match) {
       return res.status(401).json({ msg: "Email ou mot de passe incorrect!" });
-    }
+     }
+
+    
+    
 
     // Génération des tokens
     const accessToken = generateAccessToken(user);
@@ -63,7 +66,7 @@ export const login = async (req, res) => {
     return res.status(200).json({ msg: "Connexion réussie" });
 
   } catch (error) {
-    console.error("Erreur lors de la connexion:", error);
+    console.log("Erreur lors de la connexion:", error);
     return res.status(500).json({ msg: "Erreur serveur lors de la connexion." });
   }
 };

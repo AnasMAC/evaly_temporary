@@ -12,17 +12,17 @@ vi.mock('express-validator', () => ({
 import { validationResult, matchedData } from 'express-validator';
 
 // ─── 2) MOCK VerificationCode (Sequelize) ──────────────────────────────────
-vi.mock('../src/models/VerificationCode.js', () => ({
+vi.mock('../../src/models/VerificationCode.js', () => ({
   __esModule: true,
   default: {
     findOne: vi.fn(),
     // we’ll stub destroy on the returned instance
   },
 }));
-import VerificationCode from '../src/models/VerificationCode.js';
+import VerificationCode from '../../src/models/VerificationCode.js';
 
 // ─── 3) IMPORT controller APRÈS les mocks ──────────────────────────────────
-import { submitcode } from '../src/controllers/authControllers.js';  // ajuste chemin si besoin
+import { submitcode } from '../../src/controllers/authControllers.js';  // ajuste chemin si besoin
 
 // ─── 4) mini‐app Express pour l’endpoint ───────────────────────────────────
 function createApp() {

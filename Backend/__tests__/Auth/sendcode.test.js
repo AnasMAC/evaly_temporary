@@ -12,25 +12,25 @@ vi.mock('express-validator', () => ({
 import { validationResult, matchedData } from 'express-validator';
 
 // ─── 2) MOCK Utilisateur (Sequelize) ────────────────────────────────────────
-vi.mock('../src/models/utilisateur.js', () => ({
+vi.mock('../../src/models/utilisateur.js', () => ({
   __esModule: true,
   default: { findOne: vi.fn() },
 }));
-import Utilisateur from '../src/models/utilisateur.js';
+import Utilisateur from '../../src/models/utilisateur.js';
 
 // ─── 3) MOCK VerificationCode (Sequelize) ──────────────────────────────────
-vi.mock('../src/models/VerificationCode.js', () => ({
+vi.mock('../../src/models/VerificationCode.js', () => ({
   __esModule: true,
   default: { create: vi.fn() },
 }));
-import VerificationCode from '../src/models/VerificationCode.js';
+import VerificationCode from '../../src/models/VerificationCode.js';
 
 // ─── 4) MOCK sendVerificationEmail ─────────────────────────────────────────
-vi.mock('../src/assets/email.js', () => ({
+vi.mock('../../src/assets/email.js', () => ({
   __esModule: true,
   sendVerificationEmail: vi.fn(() => Promise.resolve()),
 }));
-import { sendVerificationEmail } from '../src/assets/email.js';
+import { sendVerificationEmail } from '../../src/assets/email.js';
 
 // ─── 5) MOCK jsonwebtoken.sign ──────────────────────────────────────────────
 vi.mock('jsonwebtoken', () => ({
@@ -42,7 +42,7 @@ vi.mock('jsonwebtoken', () => ({
 import jwt from 'jsonwebtoken';
 
 // ─── 6) IMPORTER le contrôleur APRÈS les mocks ───────────────────────────────
-import { sendcode } from '../src/controllers/authControllers.js';
+import { sendcode } from '../../src/controllers/authControllers.js';
 
 // ─── 7) Créer une mini‐app Express pour tester l’endpoint ────────────────────
 function createApp() {

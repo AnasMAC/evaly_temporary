@@ -5,11 +5,11 @@ dotenv.config();
 
 // Configuration du transporteur
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,  // Hôte SMTP configuré dans les variables d'environnement
-  port: process.env.EMAIL_PORT,  // Port configuré dans les variables d'environnement
+  host: 'smtp.gmail.com',  // Hôte SMTP configuré dans les variables d'environnement
+  port: 465,  // Port configuré dans les variables d'environnement
   auth: {
-    user: process.env.EMAIL_USER,  // Votre email (par exemple, "example@gmail.com")
-    pass: process.env.EMAIL_PASS,  // Votre mot de passe ou mot de passe d'application
+    user: 'said.nichan14@gmail.com',  // Votre email (par exemple, "example@gmail.com")
+    pass: 'qqorhwcyrnxsoncc',  // Votre mot de passe ou mot de passe d'application
   },
 });
 
@@ -25,7 +25,7 @@ transporter.verify((error, success) => {
 // Fonction pour envoyer l'email de vérification
 export const sendVerificationEmail = async (userEmail, verificationCode) => {
   const mailOptions = {
-    from: process.env.EMAIL_USER,  // Utilisation de l'email de l'expéditeur configuré dans les variables d'environnement
+    from: 'said.nichan14@gmail.com',  // Utilisation de l'email de l'expéditeur configuré dans les variables d'environnement
     to: userEmail,  // L'email du destinataire
     subject: "Code de vérification pour la réinitialisation du mot de passe.",
     html: `<p>Entrez ce code de vérification pour réinitialiser votre mot de passe </p> : <h1>${verificationCode}</h1>`,  // Message de l'email
