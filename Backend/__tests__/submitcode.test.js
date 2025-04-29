@@ -1,58 +1,107 @@
-import request from "supertest";
-import app from "../index.js";
+// tests/submitcode.integration.spec.js
+import { describe, it, beforeEach, expect, vi } from 'vitest';
+import request from 'supertest';
+import express from 'express';
 
-  // L'importation de ta base de données Sequelize
-  // Assure-toi que tu importes correctement ton modèle
+// ─── 1) MOCK express-validator ──────────────────────────────────────────────
+vi.mock('express-validator', () => ({
+  __esModule: true,
+  validationResult: vi.fn(),
+  matchedData: vi.fn(),
+}));
+import { validationResult, matchedData } from 'express-validator';
 
-describe("Test submitcode", () => {
-  let validVerificationCode;
+// ─── 2) MOCK VerificationCode (Sequelize) ──────────────────────────────────
+vi.mock('../src/models/VerificationCode.js', () => ({
+  __esModule: true,
+  default: {
+    findOne: vi.fn(),
+    // we’ll stub destroy on the returned instance
+  },
+}));
+import VerificationCode from '../src/models/VerificationCode.js';
 
-  test("should return 400 if validation fails (no code)", async () => {
-    const res = await request(app)
-      .post("/auth/submitcode")
-      .send({});  // Données invalides (pas de code envoyé)
+// ─── 3) IMPORT controller APRÈS les mocks ──────────────────────────────────
+import { submitcode } from '../src/controllers/authControllers.js';  // ajuste chemin si besoin
 
-    expect(res.status).toBe(400);  // Vérifie que le statut est 400
-    expect(res.body.msg).toBe("Erreur de validation des données.");
+// ─── 4) mini‐app Express pour l’endpoint ───────────────────────────────────
+function createApp() {
+  const app = express();
+  app.use(express.json());
+  app.post('/auth/submitcode', submitcode);
+  return app;
+}
+
+describe('POST /auth/submitcode — intégration avec Supertest', () => {
+  let app;
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    app = createApp();
+
+    // validation par défaut OK
+    validationResult.mockReturnValue({ isEmpty: () => true, array: () => [] });
+    matchedData.mockImplementation(req => ({ verificationCode: req.body.verificationCode }));
   });
 
-  test("should return 400 if code is invalid or expired", async () => {
-    // Utiliser un code invalide (qui n'existe pas dans la base de données)
-    const res = await request(app)
-      .post("/auth/submitcode")
-      .send({ verificationCode: "invalidCode" });
+  it('400 si express-validator détecte une erreur', async () => {
+    validationResult.mockReturnValue({ isEmpty: () => false, array: () => ['err'] });
 
-    expect(res.status).toBe(400);  // Vérifie que le statut est 400
-    expect(res.body.msg).toBe("Erreur de validation des données.");
+    const res = await request(app)
+      .post('/auth/submitcode')
+      .send({ verificationCode: 'xxx' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.msg).toBe('Erreur de validation des données.');
   });
 
-  validVerificationCode = "12345699"; // Code fictif pour le test
- 
-
-
-
-test("Devrait retourner 200 et valider le code", async () => {
-  // Tester la soumission du code de vérification valide
-  const res = await request(app)
-    .post("/auth/submitcode")
-    .send({ verificationCode: validVerificationCode });
-
-  expect(res.status).toBe(200); // Vérifie que le statut est 200
-  expect(res.body.msg).toBe("Code de vérification validé.");
-
-  
-  expect(codeEntry).toBeNull(); // Le code doit être supprimé après validation
-});
-
-  test("should return 500 if there's a server error", async () => {
-    // Simuler une erreur dans la base de données
-   
+  it('400 si code non trouvé', async () => {
+    VerificationCode.findOne.mockResolvedValueOnce(null);
 
     const res = await request(app)
-      .post("/auth/submitcode")
-      .send({ verificationCode: validVerificationCode });
-     
-    expect(res.status).toBe(500);  // Vérifie que le statut est 500
-    expect(res.body.msg).toBe("Erreur serveur lors de la validation du code.");
+      .post('/auth/submitcode')
+      .send({ verificationCode: 'abc123' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.msg).toBe('Code invalide ou expiré.');
+  });
+
+  it('400 si code expiré', async () => {
+    const expiredEntry = { expiresAt: new Date(Date.now() - 60_000) }; // il y a 1 min
+    VerificationCode.findOne.mockResolvedValueOnce(expiredEntry);
+
+    const res = await request(app)
+      .post('/auth/submitcode')
+      .send({ verificationCode: 'abc123' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.msg).toBe('Code invalide ou expiré.');
+  });
+
+  it('200 et supprime le code si valide', async () => {
+    const future = new Date(Date.now() + 60_000); // dans 1 min
+    // stub instance avec destroy
+    const entry = { expiresAt: future, destroy: vi.fn(() => Promise.resolve()) };
+    VerificationCode.findOne.mockResolvedValueOnce(entry);
+
+    const res = await request(app)
+      .post('/auth/submitcode')
+      .send({ verificationCode: 'valid123' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.msg).toBe('Code de vérification validé.');
+    expect(entry.destroy).toHaveBeenCalledOnce();
+  });
+
+  it('500 si exception interne', async () => {
+    // faire findOne rejeter
+    VerificationCode.findOne.mockRejectedValueOnce(new Error('DB down'));
+
+    const res = await request(app)
+      .post('/auth/submitcode')
+      .send({ verificationCode: 'any' });
+
+    expect(res.status).toBe(500);
+    expect(res.body.msg).toBe('Erreur serveur lors de la validation du code.');
   });
 });

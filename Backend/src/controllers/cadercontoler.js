@@ -1,4 +1,3 @@
-import { where } from 'sequelize';
 import db from '../models/index.js';
 const { Cadre, Etudiant, Enseignant, Professionnel,Competence,etudiant_cadre,sequelize} = db;
 
