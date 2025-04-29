@@ -12,6 +12,11 @@ class Competence extends Model{
                 onDelete:'CASCADE',
                 onUpdate:'CASCADE'                
             },
+        });
+        this.hasMany(models.Evaluation,
+        {
+            as:'evaluations',
+            foreignKey:'id_competence'
         })
     }
 }

@@ -7,12 +7,16 @@ class Etudiant extends Model {
     this.belongsTo(models.Utilisateur, {
       as: 'base',            
       foreignKey: 'cin'
-    }),
+    });
     this.belongsToMany(models.Cadre, {
       through: 'etudiant_cadre',
       as: 'participants',
       foreignKey: 'cin'
-    })
+    });
+    this.hasMany(models.Evaluation, {
+      as: 'evaluations',
+      foreignKey: 'cinEvalué'
+    });
   }
 }
 

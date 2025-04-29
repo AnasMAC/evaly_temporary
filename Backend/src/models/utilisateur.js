@@ -13,6 +13,7 @@ class Utilisateur extends Model {
       as: 'gerant',
       foreignKey: 'administrateurId'
     });
+    this.hasMany(models.Evaluation, { as: 'evaluations', foreignKey: 'cinEvaluateur' });
   }
 }
 

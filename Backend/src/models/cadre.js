@@ -11,7 +11,7 @@ class Cadre extends Model {
                 onDelete: 'CASCADE',
                 onUpdate: 'CASCADE'
             }
-        }),
+        });
         this.belongsTo(models.Professionnel),
         this.belongsToMany(models.Enseignant, {
             through: 'enseignant_cadre',
@@ -21,7 +21,7 @@ class Cadre extends Model {
                 onDelete: 'CASCADE',
                 onUpdate: 'CASCADE'
             }
-        }),
+        });
         this.belongsToMany(models.Competence, {
             through: 'referenteil',
             as: 'competences',
@@ -30,7 +30,11 @@ class Cadre extends Model {
                 onDelete: 'CASCADE',
                 onUpdate: 'CASCADE'
             },
-        })
+        });
+        this.hasMany(models.Evaluation, {
+            as: 'evaluations',
+            foreignKey: 'id_cadre'
+        });
     }
 }
 

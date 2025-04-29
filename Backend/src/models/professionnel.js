@@ -6,7 +6,7 @@ class Professionnel extends Model {
     this.belongsTo(models.Utilisateur, {
       as: 'base',
       foreignKey: 'cin'
-    }),
+    });
     this.hasMany(models.Cadre, {
       as: 'encadrant',
       foreignKey: 'cin'
