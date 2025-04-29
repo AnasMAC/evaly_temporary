@@ -10,6 +10,7 @@ import { changePwd } from "./src/controllers/changePwd.js";
 import adminRouter from "./src/routes/cadreRouter.js"
 import CompetenceRouter from "./src/routes/CompetenceRouter.js";
 import StatiqueRouter from "./src/routes/statistiqueRouter.js";
+import EvaluationRouter from "./src/routes/evaluationRouter.js";
 
 
 const app = express();
@@ -23,6 +24,7 @@ app.use('/auth', authRoutes);
 app.use('/api', adminRouter); 
 app.use('/api', CompetenceRouter);
 app.use('/api', StatiqueRouter);
+app.use('/api', EvaluationRouter);
 // Utiliser CORS pour toutes les routes
 app.use(cors({
   origin: 'http://localhost:8080' ,
