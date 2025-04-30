@@ -92,14 +92,28 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { reactive, ref, onMounted } from 'vue';
 import axios from 'axios';
+import { useAuthStore } from '@/stores/authStore';
+
+// Définir l'objet student avec reactive
+const student = reactive({
+  cin: '',
+  nom: '',
+  prenom: '',
+  email: '',
+  promotion: '',
+  filiere: '',
+  role: 'etudiant'
+});
 
 const etudiants = ref([]);
-const student = ref({ cin: '', nom: '', prenom: '', email: '', promotion: '', filiere: '', role: 'etudiant' });
 const isEditing = ref(false);
-const administrateurId = ref('admin123'); // À remplacer par l'ID de l'administrateur connecté
+const authStore = useAuthStore();
+const administrateurId = ref(authStore.cin);
+console.log(authStore.cin); // Affiche l'ID de l'administrateur connecté
 
+// Accéder aux données du store
 const fetchStudents = async () => {
   try {
     const response = await axios.get(`/api/etudiants/${administrateurId.value}`);
@@ -110,21 +124,29 @@ const fetchStudents = async () => {
 };
 
 const handleSubmit = async () => {
+  console.log('Formulaire soumis'); // Vérifier si la méthode est appelée
   try {
     if (isEditing.value) {
-      await axios.put(`/api/etudiants/${administrateurId.value}`, student.value);
+      console.log('Modification de l\'étudiant');
+      await axios.put(`/api/etudiants/${administrateurId.value}`, student);
     } else {
-      await axios.post(`/api/etudiants/${administrateurId.value}`, student.value);
+      console.log('Ajout d\'un nouvel étudiant');
+      await axios.post(`/api/etudiants/${administrateurId.value}`, student);
     }
-    fetchStudents();
-    resetForm();
+    fetchStudents(); // Récupérer les étudiants après soumission
+    resetForm(); // Réinitialiser le formulaire
   } catch (error) {
     console.error("Erreur lors de l'enregistrement de l'étudiant:", error);
   }
 };
 
 const editStudent = (etudiant) => {
-  student.value = { ...etudiant };
+  student.cin = etudiant.cin;
+  student.nom = etudiant.nom;
+  student.prenom = etudiant.prenom;
+  student.email = etudiant.email;
+  student.promotion = etudiant.promotion;
+  student.filiere = etudiant.filiere;
   isEditing.value = true;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 };
@@ -134,7 +156,12 @@ const cancelEdit = () => {
 };
 
 const resetForm = () => {
-  student.value = { cin: '', nom: '', prenom: '', email: '', promotion: '', filiere: '', role: 'etudiant' };
+  student.cin = '';
+  student.nom = '';
+  student.prenom = '';
+  student.email = '';
+  student.promotion = '';
+  student.filiere = '';
   isEditing.value = false;
 };
 
@@ -147,13 +174,13 @@ const confirmDelete = (cin) => {
 const deleteStudent = async (cin) => {
   try {
     await axios.delete(`/api/etudiants/${administrateurId.value}/${cin}`);
-    fetchStudents();
+    fetchStudents(); // Rafraîchir la liste après suppression
   } catch (error) {
     console.error("Erreur lors de la suppression de l'étudiant:", error);
   }
 };
 
-onMounted(fetchStudents);
+onMounted(fetchStudents); // Charger les étudiants lors du montage du composant
 </script>
 
 <style scoped>

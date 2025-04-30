@@ -51,8 +51,11 @@
 <script setup>
 import { ref } from 'vue';
 import axios from 'axios';
-// pour donner autorisation de stocker token en cookies 
+import { useRouter } from 'vue-router'; // Importer le router de Vue
+
+// Pour donner autorisation de stocker le token dans les cookies
 axios.defaults.withCredentials = true;
+
 // Variables de formulaire
 const email = ref('');
 const pwd = ref('');
@@ -61,8 +64,11 @@ const error = ref('');
 const emailError = ref(false); // Ajouter une erreur pour l'email
 const pwdError = ref(false);   // Ajouter une erreur pour le mot de passe
 
+// Utiliser le router pour rediriger
+const router = useRouter();
+
 // Émission d'événements au composant parent
-const emit = defineEmits(['loginSuccess', 'forgotPassword']);
+const emit = defineEmits(['handleLoginSuccess', 'forgotPassword']);
 
 // Fonction de connexion
 const handleLogin = async () => {
@@ -90,8 +96,13 @@ const handleLogin = async () => {
       pwd: pwd.value
     });
 
+    // Enregistrer les données du rôle dans la réponse
+    const userRole = response.data.role;  // Le rôle renvoyé par le backend
+    console.log(userRole)
     // Émettre l'événement de connexion réussie
-    emit('loginSuccess', response.data);
+    emit('handleLoginSuccess', response.data);
+
+    
 
   } catch (err) {
     console.error('Erreur de connexion:', err);

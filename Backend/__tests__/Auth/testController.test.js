@@ -9,13 +9,24 @@ import db from '../../src/models/index.js';
 describe('POST /auth/login (intégration réelle DB)', () => {
   // 1) Au tout début, on force la synchronisation du schéma en mémoire
   beforeAll(async () => {
-    // Assure-toi que dans src/models/db.js tu as quelque chose comme :
-    //   dialect: 'sqlite', storage: ':memory:' quand NODE_ENV==='test'
     await db.sequelize.sync({ force: true });
   });
 
   // 2) Avant chaque test, on crée notre utilisateur fixture
   beforeEach(async () => {
+    const hashedAdminPwd = await bcrypt.hash('admin00', 10); 
+                const admin = await db.Utilisateur.create({
+                  cin : 'KB1000',
+                  pwd : hashedAdminPwd,
+                  nom: 'nichan',
+                  prenom : 'said',
+                  email : 'saidnichan789@gmail.com',
+                  role : 'administrateur'
+                });
+                 await db.Administrateur.create({
+                      cin: admin.cin 
+                    });
+
     const hashed = await bcrypt.hash('testpassword', 10);
     await db.Utilisateur.create({
       cin:    'USER123',
@@ -24,6 +35,7 @@ describe('POST /auth/login (intégration réelle DB)', () => {
       nom:    'Test',
       prenom: 'User',
       role:   'etudiant',
+      administrateurId: admin.cin
     });
   });
 

@@ -27,7 +27,7 @@
           <!-- Formulaire de connexion -->
           <LoginForm 
             v-if="currentView === 'login'" 
-            @login-success="handleLoginSuccess" 
+            @handleLoginSuccess="handleLoginSuccess" 
             @forgot-password="currentView = 'forgotPassword'" 
           />
           
@@ -73,6 +73,12 @@
 
 <script setup>
 import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '../../stores/authStore';
+import { useMenuStore } from '../../stores/menuStore';
+import { onMounted } from 'vue';
+
+// Importation des composants
 import LoginForm from './LoginForm.vue';
 import ForgotPasswordForm from './ForgotPasswordForm.vue';
 import VerifyCodeForm from './VerifyCodeForm.vue';
@@ -87,12 +93,60 @@ const currentView = ref('login'); // 'login', 'forgotPassword', 'verifyCode', 'r
 const resetEmail = ref('');
 const verificationCode = ref('');
 
-// Fonction pour gérer la connexion réussie
-const handleLoginSuccess = (userData) => {
-  // Ici vous pouvez rediriger l'utilisateur vers la page d'accueil
-  console.log('Connecté avec succès:', userData);
-  
+const router = useRouter();
+const authStore = useAuthStore();
+const menuStore = useMenuStore();
+
+const roleLanding = {
+  admin:      '/admin/dashboard',
+  enseignant: '/admin/students',
+  etudiant:   '/admin/challenges',
+  tuteur:     '/admin/stagiaires'
 };
+
+// Fonction pour gérer le succès de la connexion
+const handleLoginSuccess = (responseData) => {
+  // Vérifier si la réponse contient un rôle
+  if (!responseData || !responseData.role) {
+    console.error('Réponse invalide, aucun rôle trouvé');
+    return;
+  }
+
+  // 1) Stocker l'état d'authentification
+  authStore.isAuthenticated = true;
+  // Ici, vous pouvez décider de stocker un token ou tout autre détail nécessaire
+
+
+// Stocker les informations dans le store
+authStore.setUser({
+  cin: responseData.cin,
+  role: responseData.role,
+});
+  // 2) Construire le menu selon le rôle
+  menuStore.setLinksByRole(responseData.role);
+
+  // 3) Rediriger vers la page correspondante en fonction du rôle
+  const roleLanding = {
+    administrateur:      '/admin/dashboard',
+    enseignant: '/admin/students',
+    etudiant:   '/admin/challenges',
+    tuteur:     '/admin/stagiaires',
+  };
+
+  const target = roleLanding[responseData.role] || '/login';  // Si le rôle n'est pas trouvé, redirige vers /login
+  router.push(target);
+};
+
+// Vérifier au chargement si déjà logué (cookie HttpOnly)
+onMounted(async () => {
+  if (authStore.checkAuth && await authStore.fetchUser) {
+    const me = await authStore.fetchUser();
+    if (me) {
+      menuStore.setLinksByRole(me.role);
+      router.push(roleLanding[me.role] || '/admin/dashboard');
+    }
+  }
+});
 
 // Fonction pour gérer l'envoi du code
 const handleCodeSent = (email) => {

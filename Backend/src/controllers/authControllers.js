@@ -61,9 +61,10 @@ export const login = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 13 * 60 * 1000, // 13 minutes
-    });
-
-    return res.status(200).json({ msg: "Connexion réussie" });
+    }); 
+    
+    return res.status(200).json({role:user.role ,cin:user.cin
+     });
 
   } catch (error) {
     console.log("Erreur lors de la connexion:", error);
