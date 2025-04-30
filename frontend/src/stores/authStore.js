@@ -50,10 +50,10 @@ export const useAuthStore = defineStore('auth', {
     // Vérifier si l'utilisateur est déjà connecté (au chargement de l'application)
     checkAuth() {
       // Vérifie si l'utilisateur est authentifié
-      const isAuth = localStorage.getItem('isAuthenticated');
+       const isAuth = localStorage.getItem('isAuthenticated');
       
       if (isAuth === 'true') {
-        this.isAuthenticated = true;
+        this.isAuthenticated = true; // fontion pour eviter la redirection dans login avec refreshement de la page 
         
         // Récupérer les informations stockées dans localStorage
         const storedCin = localStorage.getItem('userCin');
@@ -64,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
           this.cin = storedCin;
           this.role = storedRole;
         }
-      }
+      } 
     }
-  }
+  } 
 });
