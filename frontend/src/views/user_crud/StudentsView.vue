@@ -43,7 +43,7 @@
               <option value="GSEA">GSEA</option>
             </select>
           </div>
-        </form>
+      
 
         <div class="md:col-span-3 flex justify-center mt-4">
           <button type="submit" class="btn-orange py-2 px-8 rounded-lg font-medium">
@@ -53,8 +53,9 @@
             Annuler
           </button>
         </div>
+      </form>
       </div>
-
+    
       <!-- Liste des étudiants -->
       <div class="bg-white rounded-lg shadow-md">
         <h2 class="text-xl font-bold p-6 border-b" :style="{ color: '#33488E' }">Liste des étudiants créés</h2>

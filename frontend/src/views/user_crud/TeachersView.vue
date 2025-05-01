@@ -76,11 +76,12 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-
+import { useAuthStore } from '@/stores/authStore';
 const enseignants = ref([]);
 const teacher = ref({ cin: '', nom: '', prenom: '', email: '', departement: '', role: 'enseignant' });
 const isEditing = ref(false);
-const administrateurId = ref('admin123'); // À remplacer par l'ID de l'administrateur connecté
+const authStore = useAuthStore();
+const administrateurId = ref(authStore.cin); // À remplacer par l'ID de l'administrateur connecté
 
 const fetchTeachers = async () => {
   try {

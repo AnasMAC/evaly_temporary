@@ -26,7 +26,7 @@ transporter.verify((error, success) => {
 export const sendVerificationEmail = async (userEmail, verificationCode) => {
   const mailOptions = {
     from: 'said.nichan14@gmail.com',  // Utilisation de l'email de l'expéditeur configuré dans les variables d'environnement
-    to: userEmail,  // L'email du destinataire
+    to: userEmail,  
     subject: 'Code de vérification pour la réinitialisation de votre mot de passe',
     html: `
       <p>Bonjour,</p>
@@ -35,7 +35,7 @@ export const sendVerificationEmail = async (userEmail, verificationCode) => {
       <p>Ce code est valable pendant 15 minutes. Après ce délai, vous devrez demander un nouveau code de vérification.</p>
       <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.</p>
       <p>Cordialement, <br>L'équipe de support de <strong> Evaly</strong></p>
-    `,  // Message de l'email
+    `, 
   };
 
   try {

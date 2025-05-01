@@ -10,7 +10,7 @@ export default {
   },
   test: {
     username: 'postgres',
-    password: 'said1',
+    password: 'said',
     database: 'evalydb',
     host: '127.0.0.1',
     dialect: 'postgres',

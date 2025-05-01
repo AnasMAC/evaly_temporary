@@ -88,7 +88,7 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
-
+import { useAuthStore } from '@/stores/authStore';
 const professionnels = ref([]);
 const professional = ref({ 
   cin: '', 
@@ -100,7 +100,8 @@ const professional = ref({
   role: 'professionnel' 
 });
 const isEditing = ref(false);
-const administrateurId = ref('admin123'); // À remplacer par l'ID de l'administrateur connecté
+const authStore = useAuthStore();
+const administrateurId = ref(authStore.cin);  // À remplacer par l'ID de l'administrateur connecté
 
 const fetchProfessionals = async () => {
   try {
