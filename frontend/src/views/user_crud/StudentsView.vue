@@ -43,7 +43,7 @@
               <option value="GSEA">GSEA</option>
             </select>
           </div>
-        </form>
+      
 
         <div class="md:col-span-3 flex justify-center mt-4">
           <button type="submit" class="btn-orange py-2 px-8 rounded-lg font-medium">
@@ -53,8 +53,9 @@
             Annuler
           </button>
         </div>
+      </form>
       </div>
-
+    
       <!-- Liste des étudiants -->
       <div class="bg-white rounded-lg shadow-md">
         <h2 class="text-xl font-bold p-6 border-b" :style="{ color: '#33488E' }">Liste des étudiants créés</h2>
@@ -75,7 +76,7 @@
               <td class="px-6 py-4">{{ etudiant.nom }} {{ etudiant.prenom }}</td>
               <td class="px-6 py-4 w-24">{{ etudiant.cin }}</td>
               <td class="px-6 py-4 w-64">{{ etudiant.email }}</td>
-              <td class="px-6 py-4">{{ etudiant.filiere }}</td>
+              <td class="px-6 py-4">{{ etudiant.etudiant.filiere }}</td>
               <td class="px-6 py-4">
                 <button class="text-[#33488E] font-medium hover:text-[#2a3a73] mr-4" @click="editStudent(etudiant)">EDIT</button>
                 <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="confirmDelete(etudiant.cin)">DELETE</button>

@@ -18,6 +18,12 @@ class Competence extends Model{
             as:'evaluations',
             foreignKey:'id_competence'
         })
+        this.hasMany(models.Indicateur, {
+            as: 'indicateurs',
+            foreignKey: 'id_competence',
+            onDelete: 'CASCADE',
+            onUpdate: 'CASCADE'
+        });
     }
 }
 

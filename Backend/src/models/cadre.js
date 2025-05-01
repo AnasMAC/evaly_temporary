@@ -35,10 +35,6 @@ class Cadre extends Model {
             as: 'evaluations',
             foreignKey: 'id_cadre'
         });
-        this.hasMany(models.Indicateur, {
-            as: 'indicateurs',
-            foreignKey: 'id_cadre'
-        });
     }
 }
 

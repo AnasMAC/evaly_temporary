@@ -4,13 +4,13 @@ export default {
   development: {
     username: 'pc',
     password: 'anas',
-    database: 'evaly',
+    database: 'evalytest',
     host: '127.0.0.1',
     dialect: 'postgres',
   },
   test: {
     username: 'postgres',
-    password: 'said1234',
+    password: 'said',
     database: 'evalydb',
     host: '127.0.0.1',
     dialect: 'postgres',

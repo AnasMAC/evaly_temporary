@@ -1,1 +1,0 @@
- /home/pc/Documents/evaly/e/Evaly/Backend/Dockerfile

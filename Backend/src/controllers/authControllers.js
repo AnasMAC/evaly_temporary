@@ -29,7 +29,10 @@ export const login = async (req, res) => {
     const match = await bcrypt.compare(pwd, user.pwd);
     if (!match) {
       return res.status(401).json({ msg: "Email ou mot de passe incorrect!" });
-    }
+     }
+
+    
+    
 
     // Génération des tokens
     const accessToken = generateAccessToken(user);
@@ -58,12 +61,12 @@ export const login = async (req, res) => {
       secure: process.env.NODE_ENV === "production",
       sameSite: "Strict",
       maxAge: 13 * 60 * 1000, // 13 minutes
-    });
-
-    return res.status(200).json({ msg: "Connexion réussie" });
+    }); 
+    
+    return res.status(200).json({role:user.role , cin:user.cin});
 
   } catch (error) {
-    console.error("Erreur lors de la connexion:", error);
+    console.log("Erreur lors de la connexion:", error);
     return res.status(500).json({ msg: "Erreur serveur lors de la connexion." });
   }
 };

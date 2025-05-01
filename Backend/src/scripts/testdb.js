@@ -4,7 +4,7 @@ import db from '../models/index.js';
   try {
     await db.sequelize.authenticate();
     console.log(' Connexion OK');
-   await db.sequelize.sync({ alter: true });
+   await db.sequelize.sync({ force: true });
     console.log(' Tables créées ou synchronisées avec les modèles'); 
 
   } catch (err) {

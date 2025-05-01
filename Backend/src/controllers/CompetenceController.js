@@ -1,76 +1,174 @@
 import db from '../models/index.js';
-const {Competence}=db
+const { Competence, Indicateur } = db;
 
-export const addCompetences = async(req,res)=>{
+// CREATE
+export const addCompetences = async (req, res) => {
+  try {
+    const { Nom, Categorie, Descreption, ind = [] } = req.body;
+    
+    const transaction = await db.sequelize.transaction();
+    
     try {
-        const{Nom,Categorie,Descreption,ind=[]}=req.body;
-        if (!Nom || !Categorie || !Descreption) {
-            return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
+      const competence = await Competence.create({
+        Nom,
+        Categorie,
+        Descreption
+      }, { transaction });
+
+      await Promise.all(ind.map(indicateur => 
+        Indicateur.create({
+          indicateur,
+          id_Competence: competence.id_Competence
+        }, { transaction })
+      ));
+
+      await transaction.commit();
+      res.status(201).json({ 
+        message: 'Compétence ajoutée avec succès.',
+        competence: {
+          ...competence.toJSON(),
+          indicateurs: ind
         }
-        const competence = await Competence.create({
-            Nom,
-            Categorie,
-            Descreption
-        });
-        for (let i = 0; i < ind.length; i++) {
-            await competence.createindicateurs({indicateur:ind[i]});
-        }
-        res.status(201).json({ message: 'Compétence ajoutée avec succès.', competence });
+      });
     } catch (error) {
-        console.error('Erreur lors de l\'ajout de la compétence:', error);
-        res.status(500).json({ message: 'Erreur lors de l\'ajout de la compétence.' });
+      await transaction.rollback();
+      throw error;
     }
+  } catch (error) {
+    console.error('Erreur création:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
-}
+// READ ALL
+export const getCompetences = async (req, res) => {
+  try {
+    const competences = await Competence.findAll({
+      include: [{
+        model: Indicateur,
+        as: 'indicateurs',
+        attributes: ['id_indicateur', 'indicateur']
+      }]
+    });
+    res.status(200).json(competences);
+  } catch (error) {
+    console.error('Erreur lecture:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
 
-export const getCompetences = async(req,res)=>{
+// READ ONE
+export const getCompetenceById = async (req, res) => {
+  try {
+    const competence = await Competence.findByPk(req.params.id_Competence, {
+      include: [{
+        model: Indicateur,
+        as: 'indicateurs',
+        attributes: ['id_indicateur', 'indicateur']
+      }]
+    });
+    
+    if (!competence) return res.status(404).json({ message: 'Non trouvé' });
+    
+    res.status(200).json(competence);
+  } catch (error) {
+    console.error('Erreur lecture:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// UPDATE
+export const updateCompetence = async (req, res) => {
+    const transaction = await db.sequelize.transaction();
+    
     try {
-        const competences = await Competence.findAll();
-        res.status(200).json(competences);
+      // Récupération avec l'alias correct
+      const competence = await Competence.findByPk(req.params.id_Competence, { 
+        transaction,
+        include: [{
+          model: Indicateur,
+          as: 'indicateurs' // <-- Ajouter l'alias ici
+        }]
+      });
+  
+      if (!competence) {
+        await transaction.rollback();
+        return res.status(404).json({ message: 'Compétence non trouvée' });
+      }
+  
+      // Mise à jour de la compétence
+      await competence.update({
+        Nom: req.body.Nom,
+        Categorie: req.body.Categorie,
+        Descreption: req.body.Descreption
+      }, { transaction });
+  
+      // Suppression des anciens indicateurs
+      await Indicateur.destroy({ 
+        where: { id_competence: competence.id_Competence },
+        transaction
+      });
+  
+      // Création des nouveaux indicateurs
+      if (req.body.ind && req.body.ind.length > 0) {
+        await Indicateur.bulkCreate(
+          req.body.ind.map(indicateur => ({
+            indicateur,
+            id_competence: competence.id_Competence
+          })),
+          { transaction }
+        );
+      }
+  
+      await transaction.commit();
+  
+      // Récupération finale avec l'alias
+      const updatedCompetence = await Competence.findByPk(req.params.id_Competence, {
+        include: [{
+          model: Indicateur,
+          as: 'indicateurs',
+          attributes: ['id_indicateur', 'indicateur'] // Exclure dans la réponse finale
+        }]
+      });
+  
+      res.status(200).json({
+        message: 'Compétence mise à jour avec succès',
+        competence: updatedCompetence
+      });
+  
     } catch (error) {
-        console.error('Erreur lors de la récupération des compétences:', error);
-        res.status(500).json({ message: 'Erreur lors de la récupération des compétences.' });
+      if (transaction.finished !== 'commit') {
+        await transaction.rollback();
+      }
+      console.error('Erreur:', error);
+      res.status(500).json({
+        message: 'Erreur lors de la mise à jour',
+        details: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
-}
+  };
 
-export const getCompetenceById = async(req,res)=>{
-    try {
-        const competence = await Competence.findByPk(req.params.id_Competence);
-        if (!competence) {
-            return res.status(404).json({ message: 'Compétence introuvable.' });
-        }
-        res.status(200).json(competence);
-    } catch (error) {
-        console.error('Erreur lors de la récupération de la compétence:', error);
-        res.status(500).json({ message: 'Erreur lors de la récupération de la compétence.' });
-    }
-}
+// DELETE
+export const deleteCompetence = async (req, res) => {
+  const transaction = await db.sequelize.transaction();
+  
+  try {
+    const competence = await Competence.findByPk(req.params.id_Competence, { transaction });
+    if (!competence) return res.status(404).json({ message: 'Non trouvé' });
 
-export const updateCompetence = async(req,res)=>{
-    try {
-        const competence = await Competence.findByPk(req.params.id_Competence);
-        if (!competence) {
-            return res.status(404).json({ message: 'Compétence introuvable.' });
-        }
-        const { Nom, Categorie, Descreption } = req.body;
-        await competence.update({ Nom, Categorie, Descreption });
-        res.status(200).json({ message: 'Compétence mise à jour avec succès.', competence });
-    } catch (error) {
-        console.error('Erreur lors de la mise à jour de la compétence:', error);
-        res.status(500).json({ message: 'Erreur lors de la mise à jour de la compétence.' });
-    }
-}
+    // Delete related indicateurs first
+    await Indicateur.destroy({
+      where: { id_competence: competence.id_Competence },
+      transaction
+    });
 
-export const deleteCompetence = async(req,res)=>{
-    try {
-        const competence = await Competence.findByPk(req.params.id_Competence);
-        if (!competence) {
-            return res.status(404).json({ message: 'Compétence introuvable.' });
-        }
-        await competence.destroy();
-        res.status(200).json({ message: 'Compétence supprimée avec succès.' });
-    } catch (error) {
-        console.error('Erreur lors de la suppression de la compétence:', error);
-        res.status(500).json({ message: 'Erreur lors de la suppression de la compétence.' });
-    }
-}
+    await competence.destroy({ transaction });
+    await transaction.commit();
+    
+    res.status(200).json({ message: 'Supprimé avec succès' });
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Erreur suppression:', error);
+    res.status(500).json({ message: error.message });
+  }
+};

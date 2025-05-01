@@ -3,9 +3,9 @@ import sequelize from './db.js';
 
 class Indicateur extends Model {
     static associate(models) {
-        this.belongsTo(models.Cadre, {
-        foreignKey: 'id_cadre',
-        as: 'cadre'
+        this.belongsTo(models.Competence, {
+        foreignKey: 'id_competence',
+        as: 'competence'
         });
     }   
 }
