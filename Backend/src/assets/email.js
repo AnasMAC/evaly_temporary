@@ -27,8 +27,15 @@ export const sendVerificationEmail = async (userEmail, verificationCode) => {
   const mailOptions = {
     from: 'said.nichan14@gmail.com',  // Utilisation de l'email de l'expéditeur configuré dans les variables d'environnement
     to: userEmail,  // L'email du destinataire
-    subject: "Code de vérification pour la réinitialisation du mot de passe.",
-    html: `<p>Entrez ce code de vérification pour réinitialiser votre mot de passe </p> : <h1>${verificationCode}</h1>`,  // Message de l'email
+    subject: 'Code de vérification pour la réinitialisation de votre mot de passe',
+    html: `
+      <p>Bonjour,</p>
+      <p>Nous avons bien reçu une demande de réinitialisation de mot de passe pour votre compte. Pour procéder, veuillez entrer le code de vérification ci-dessous :</p>
+      <span style="font-size: 24px; color: #1a73e8; font-weight: bold;">${verificationCode}</span>
+      <p>Ce code est valable pendant 15 minutes. Après ce délai, vous devrez demander un nouveau code de vérification.</p>
+      <p>Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet e-mail en toute sécurité.</p>
+      <p>Cordialement, <br>L'équipe de support de <strong> Evaly</strong></p>
+    `,  // Message de l'email
   };
 
   try {
