@@ -63,8 +63,7 @@ export const login = async (req, res) => {
       maxAge: 13 * 60 * 1000, // 13 minutes
     }); 
     
-    return res.status(200).json({role:user.role ,cin:user.cin
-     });
+    return res.status(200).json({role:user.role , cin:user.cin});
 
   } catch (error) {
     console.log("Erreur lors de la connexion:", error);

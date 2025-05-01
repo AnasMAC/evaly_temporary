@@ -3,10 +3,10 @@ const {Competence}=db
 
 export const addCompetences = async(req,res)=>{
     try {
-        const{Nom,Categorie,Descreption}=req.body;
-        if (!Nom || !Categorie || !Descreption) {
+        const{ Nom , Categorie , Descreption ,ind1,ind2,ind3 }=req.body;
+         if (!Nom || !Categorie || !Descreption) {
             return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
-        }
+        } 
         const competence = await Competence.create({
             Nom,
             Categorie,

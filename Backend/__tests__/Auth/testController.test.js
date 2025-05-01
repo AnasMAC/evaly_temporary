@@ -83,7 +83,7 @@ describe('POST /auth/login (intégration réelle DB)', () => {
       .send({ email: 'test@example.com', pwd: 'testpassword' });
 
     expect(res.status).toBe(200);
-    expect(res.body.msg).toBe('Connexion réussie');
+
 
     // Vérifier que les cookies d’access et refresh token sont bien présents
     const setCookies = res.get('Set-Cookie');

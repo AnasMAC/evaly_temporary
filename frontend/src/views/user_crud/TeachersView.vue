@@ -57,7 +57,7 @@
               <td class="px-6 py-4">{{ enseignant.nom }} {{ enseignant.prenom }}</td>
               <td class="px-6 py-4">{{ enseignant.cin }}</td>
               <td class="px-6 py-4">{{ enseignant.email }}</td>
-              <td class="px-6 py-4">{{ enseignant.departement }}</td>
+              <td class="px-6 py-4">{{ enseignant.enseignant.departement }}</td>
               <td class="px-6 py-4">
                 <button class="text-[#33488E] font-medium hover:text-[#2a3a73] mr-4" @click="editTeacher(enseignant)">EDIT</button>
                 <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="confirmDelete(enseignant.cin)">DELETE</button>

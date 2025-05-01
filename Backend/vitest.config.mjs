@@ -1,4 +1,3 @@
-// vitest.config.mjs
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
@@ -12,5 +11,10 @@ export default defineConfig({
       '__tests__/**/*.spec.js',
     ],
     exclude: ['node_modules', 'dist'],
+    
+    // Ajout de l'option sequence
+    sequence: {
+      enabled: true, // Exécute les fichiers de test les uns après les autres
+    },
   },
 });

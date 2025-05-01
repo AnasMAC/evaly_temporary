@@ -18,8 +18,8 @@ const createProfessionnel = async (req, res) => {
     });
 
    const professionnel= await Professionnel.create({
-      cin: utilisateur.cin,
-nomEntreprise:  req.body.nomEntreprise,
+    cin: utilisateur.cin,
+    nomEntreprise:  req.body.nomEntreprise,
     domaineActivite:  req.body.domaineActivite  });
     
     console.log("BODY:", req.body);

@@ -68,8 +68,8 @@
               <td class="px-6 py-4">{{ professionnel.nom }} {{ professionnel.prenom }}</td>
               <td class="px-6 py-4 w-24">{{ professionnel.cin }}</td>
               <td class="px-6 py-4 w-64">{{ professionnel.email }}</td>
-              <td class="px-6 py-4">{{ professionnel.nomEntreprise }}</td>
-              <td class="px-6 py-4">{{ professionnel.domaineActivite }}</td>
+              <td class="px-6 py-4">{{ professionnel.professionnel.nomEntreprise }}</td>
+              <td class="px-6 py-4">{{ professionnel.professionnel.domaineActivite }}</td>
               <td class="px-6 py-4">
                 <button class="text-[#33488E] font-medium hover:text-[#2a3a73] mr-4" @click="editProfessional(professionnel)">EDIT</button>
                 <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="confirmDelete(professionnel.cin)">DELETE</button>

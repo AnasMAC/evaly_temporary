@@ -10,7 +10,7 @@ import bcrypt from "bcrypt";
       pwd : hashedAdminPwd,
       nom: 'nichan',
       prenom : 'said',
-      email : 'saidnichan54@gmail.com',
+      email : 'saidnichan540@gmail.com',
       role : 'administrateur'
     });
 

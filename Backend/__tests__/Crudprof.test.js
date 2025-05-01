@@ -2,14 +2,14 @@ import { describe, it, beforeAll, beforeEach, afterEach, afterAll, expect } from
 import request from 'supertest';
 import bcrypt from 'bcrypt';
 
-import app from '../../index.js';                 
-import db from '../../src/models/index.js'; 
+import app from '../index.js';                 
+import db from '../src/models/index.js'; 
 
 
 
 describe('API test  enseignant CRUD',()=>{
     beforeAll(async()=>{
-     await db.sequelize.sync({force : true});
+     await db.sequelize.sync({force :true});
     }) 
     let idadmin;
     const ensignantCin='AB0000';
