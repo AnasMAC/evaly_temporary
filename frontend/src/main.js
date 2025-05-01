@@ -6,11 +6,17 @@ import './style.css'
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 // Create the app instance
-const app = createApp(App)
+import { useAuthStore } from '@/stores/authStore';
 
-// Initialize Pinia
-const pinia = createPinia()
-app.use(pinia)
+const app = createApp(App);
+
+// Créer l'instance Pinia
+const pinia = createPinia();
+app.use(pinia);
+
+// Vérifier l'authentification au démarrage de l'application
+const authStore = useAuthStore();
+authStore.checkAuth();  
 
 // Initialize router
 app.use(router)

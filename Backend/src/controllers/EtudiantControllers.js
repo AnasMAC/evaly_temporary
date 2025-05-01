@@ -11,6 +11,7 @@ const createEtudiant = async (req, res) => {
   try {
     const rawPassword = generatePassword();
     const pwd = await bcrypt.hash(rawPassword, 10); 
+    console.log("Raw Password:", rawPassword);
     const utilisateur = await Utilisateur.create({
       cin: req.body.cin,
       pwd: pwd,
@@ -37,6 +38,7 @@ const createEtudiant = async (req, res) => {
   res.status(201).json(responseData);
 
   } catch (error) {
+    console.error("Full Error:", error);
     res.status(500).json({ message: error.message });
   }
 };

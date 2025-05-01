@@ -27,11 +27,11 @@ services:
       - "3000:3000"
     environment:
       - DB_HOST=db
-      - DB_USER='postgres'
-      - DB_PASSWORD='1234'
-      - DB_NAME='evaly'
-    env_file:
-      - "../backend/.env"
+      - DB_USER=postgres
+      - DB_PASSWORD=1234
+      - DB_NAME=evaly
+    # env_file:
+    #   - "../backend/.env"
     depends_on:
       - db
     networks:
@@ -50,9 +50,12 @@ services:
     image: postgres:15
     restart: always
     environment:
-      - ACCESS_SECRET='accestoken'
-      - REFRESH_SECRET='helloworld'
-      - RESET_SECRET='jjsdhjbhsdbhhsdchjvsdhjcshdjcehv'
+      # - ACCESS_SECRET='accestoken'
+      # - REFRESH_SECRET='helloworld'
+      # - RESET_SECRET='jjsdhjbhsdbhhsdchjvsdhjcshdjcehv'
+    - POSTGRES_USER=postgres
+    - POSTGRES_PASSWORD=1234
+    - POSTGRES_DB=evaly
     volumes:
       - db-data:/var/lib/postgresql/data
     ports:

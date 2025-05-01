@@ -3,7 +3,7 @@ const {Competence}=db
 
 export const addCompetences = async(req,res)=>{
     try {
-        const{Nom,Categorie,Descreption}=req.body;
+        const{Nom,Categorie,Descreption,ind=[]}=req.body;
         if (!Nom || !Categorie || !Descreption) {
             return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
         }
@@ -12,6 +12,9 @@ export const addCompetences = async(req,res)=>{
             Categorie,
             Descreption
         });
+        for (let i = 0; i < ind.length; i++) {
+            await competence.createindicateurs({indicateur:ind[i]});
+        }
         res.status(201).json({ message: 'Compétence ajoutée avec succès.', competence });
     } catch (error) {
         console.error('Erreur lors de l\'ajout de la compétence:', error);

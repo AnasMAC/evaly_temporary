@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useMenuStore } from '../stores/menuStore'
+import { useAuthStore } from '../stores/authStore' // Assurez-vous d'avoir ce store pour l'authentification
 // User CRUD views
 import StudentsView from '../views/user_crud/StudentsView.vue'
 import TeachersView from '../views/user_crud/TeachersView.vue'
@@ -13,6 +14,7 @@ import creercompetence from '../views/cadre_crud/creercompetence.vue'
 import gestioncadres from '../views/cadre_crud/gestioncadres.vue'
 // Auth
 import AuthContainer from '../components/auth/AuthContainer.vue'
+import MainLayout from '../components/layout/MainLayout.vue'
 
 // Dashboard placeholder
 const Dashboard = {
@@ -23,28 +25,104 @@ const Signalement = {
   template: '<div>Page de signalement (à implémenter)</div>'
 }
 
-const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    { path: '/dashboard', name: 'dashboard', component: Dashboard },
-    { path: '/students', name: 'students', component: StudentsView },
-    { path: '/teachers', name: 'teachers', component: TeachersView },
-    { path: '/professionals', name: 'professionals', component: ProfessionalsView },
-    { path: '/cadres', name: 'GestionCadres', component: gestioncadres },
-    { path: '/signalement', name: 'signalement', component: Signalement },
-    { path: '/profile', name: 'profile', component: ProfileView },
-    { path: '/ajouteretudiant/:id', name: 'ajouteretudiant', component: ajouteretudiant },
-    { path: '/creercompetence', name: 'creercompetence', component: creercompetence },
-    { path: '/ajoutercompetence/:id', name: 'ajoutercompetence', component: ajoutercompetence },
-    {path: '/logout', name: 'logout',
-      beforeEnter: (to, from, next) => {
-        const menuStore = useMenuStore();
-        menuStore.logout();
-        alert('Déconnexion...');
+// Ajouter une fonction pour vérifier l'authentification
+const isAuthenticated = () => {
+  const authStore = useAuthStore();
+  return authStore.isAuthenticated;
+};
+
+// Ajouter une route pour la page de connexion
+const routes = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: AuthContainer,
+  },
+  {
+    path: '/',
+    redirect: '/login',
+  },
+  { path: '/:pathMatch(.*)*', 
+    redirect: '/login'
+ },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: MainLayout,
+    beforeEnter: (to, from, next) => {
+      if (isAuthenticated()) {
+        next();
+      } else {
         next('/login');
       }
-    }
-  ]
-})
+    },
+    children: [
+      {
+        path: 'dashboard',
+        name: 'Dashboard',
+        component: Dashboard,
+      },
+      {
+        path: 'students',
+        name: 'Students',
+        component: StudentsView,
+      },
+      {
+        path: 'teachers',
+        name: 'Teachers',
+        component: TeachersView,
+      },
+      {
+        path: 'professionals',
+        name: 'Professionals',
+        component: ProfessionalsView,
+      },
+      {
+        path: 'profile',
+        name: 'Profile',
+        component: ProfileView,
+      },
+      {
+        path: 'add-student',
+        name: 'AddStudent',
+        component: ajouteretudiant,
+      },
+      {
+        path: 'add-competence',
+        name: 'AddCompetence',
+        component: ajoutercompetence,
+      },
+      {
+        path: 'create-competence',
+        name: 'CreateCompetence',
+        component: creercompetence,
+      },
+      {
+        path: 'cadres',
+        name: 'Cadres',
+        component: gestioncadres,
+      },
+      {
+        path: 'signalement',
+        name: 'Signalement',
+        component: Signalement,
+      },
+      {
+        path: '/admin/logout',
+        name: 'Logout',
+        beforeEnter: (to, from, next) => {
+          const authStore = useAuthStore()
+          authStore.logout()           // vide le localStorage + cookies
+            .then(() => next('/login')) // puis redirige
+        },
+      },
+    ],
+  },
+];
 
-export default router
+const router = createRouter({
+  history: createWebHistory(),
+  routes,
+});
+
+export default router;

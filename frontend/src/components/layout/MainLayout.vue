@@ -10,7 +10,7 @@
       
       <!-- Main content -->
       <main class="flex-1 overflow-x-hidden overflow-y-auto p-6">
-        <slot></slot>
+        <router-view />
       </main>
     </div>
   </div>
@@ -23,4 +23,4 @@ import Header from './Header.vue';
 
 <style scoped>
 /* Styles spécifiques à la mise en page principale si nécessaire */
-</style> 
+</style>
