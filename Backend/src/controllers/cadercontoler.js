@@ -2,74 +2,79 @@ import db from '../models/index.js';
 const { Cadre, Etudiant, Enseignant, Professionnel,Competence,etudiant_cadre,sequelize} = db;
 
 export const addCadre = async (req, res) => {
-    const {
+  const {
       Nom,
       Frequence_evaluation,
       Date_debut,
       Date_fin,
       Description,
       Type,
-      id_Professionnel,
-      id_Enseignant,
-    } = req.body;
-    if (!id_Enseignant && !id_Professionnel) {
-      return res.status(400).json({ message: 'Il faut fournir un enseignant ou un professionnel.' });
-    }
-    if (!Nom || !Frequence_evaluation || !Date_debut || !Date_fin|| !Type) {
+      id_Enseignant // Champ unique reçu du frontend
+  } = req.body;
+
+  // Validation de base
+  if (!Nom || !Frequence_evaluation || !Date_debut || !Date_fin || !Type || !id_Enseignant) {
       return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
-    }
-    const dateDebut = new Date(Date_debut);
-    const dateFin = new Date(Date_fin);
-    if (dateDebut > dateFin) {
-      return res.status(400).json({ message: 'La date de début doit être inférieure à la date de fin.' });
-    }
-    const t = await sequelize.transaction();
-    try {
-      /* 1️⃣  Create the Cadre */
-      const cadre = await Cadre.create(
-        { Nom, Frequence_evaluation, Date_debut, Date_fin,Type, Description },
-        { transaction: t }
-      );
+  }
+
+  // Vérification des dates
+  const dateDebut = new Date(Date_debut);
+  const dateFin = new Date(Date_fin);
+  if (dateDebut > dateFin) {
+      return res.status(400).json({ message: 'La date de début doit être antérieure à la date de fin.' });
+  }
+
+  const t = await sequelize.transaction();
   
-      /* 2️⃣  Link Enseignant (optional one‑to‑many via join) */
-      if (id_Enseignant) {
-        const enseignant = await Enseignant.findByPk(id_Enseignant, { transaction: t });
-        if (!enseignant) {
+  try {
+      // 1. Création du cadre
+      const cadre = await Cadre.create({
+          Nom,
+          Frequence_evaluation,
+          Date_debut,
+          Date_fin,
+          Type,
+          Description
+      }, { transaction: t });
+
+      // 2. Recherche de l'encadrant
+      let enseignant = await Enseignant.findByPk(id_Enseignant, { transaction: t });
+      let professionnel = await Professionnel.findByPk(id_Enseignant, { transaction: t });
+
+      // 3. Vérification de l'existence
+      if (!enseignant && !professionnel) {
           await t.rollback();
-          return res.status(404).json({ message: 'Enseignant introuvable.' });
-        }
-        await cadre.addSuperviseur(enseignant, { transaction: t });
+          return res.status(404).json({ message: 'Encadrant introuvable dans les enseignants ou professionnels.' });
       }
-  
-      /* 3️⃣  Link Professionnel (belongsTo) */
-      if (id_Professionnel) {
-        const professionnel = await Professionnel.findByPk(id_Professionnel, { transaction: t });
-        if (!professionnel) {
-          await t.rollback();
-          return res.status(404).json({ message: 'Professionnel introuvable.' });
-        }
-        await cadre.setProfessionnel(professionnel, { transaction: t });
+
+      // 4. Association selon le type trouvé
+      if (enseignant) {
+          await cadre.addSuperviseur(enseignant, { transaction: t });
+      } else {
+          await cadre.setProfessionnel(professionnel, { transaction: t });
       }
-  
-      /* 6️⃣  Commit transaction */
+
       await t.commit();
-  
-      /* 7️⃣  Return the created Cadre with its relations */
+
+      // 5. Récupération du cadre complet
       const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-        include: [
-          { model: Enseignant, as: 'superviseurs' },
-          { model: Professionnel, as: 'Professionnel' },
-        ]
+          include: [
+              { model: Enseignant, as: 'superviseurs' },
+              { model: Professionnel, as: 'Professionnel' }
+          ]
       });
-  
+
       return res.status(201).json(fullCadre);
-  
-    } catch (error) {
+
+  } catch (error) {
       await t.rollback();
-      console.error(error);
-      return res.status(500).json({ error: error.message });
-    }
-  };
+      console.error('Erreur création cadre:', error);
+      return res.status(500).json({ 
+          message: 'Échec de la création du cadre',
+          error: error.message 
+      });
+  }
+};
 
 export const deleteCadre = async(req,res)=>{
     try{

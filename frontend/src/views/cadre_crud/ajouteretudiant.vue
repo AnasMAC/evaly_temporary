@@ -1,8 +1,10 @@
 <template>
   <div class="p-8">
     <div class="max-w-7xl mx-auto">
-      <h1 class="text-2xl font-bold mb-4 text-center" style="color:#33488E">{{ nomCadre }}</h1>
+      <h1 class="text-2xl font-bold mb-4 text-center text-[#33488E]">{{ nomCadre }}</h1>
       <p class="text-center text-sm text-gray-600 mb-8">Ajouter vos étudiants à ce cadre</p>
+
+      <!-- Formulaire d'ajout -->
       <div class="bg-white rounded-lg shadow-md p-6 mb-6">
         <form @submit.prevent="ajouterEtudiant" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
@@ -14,20 +16,22 @@
           </div>
         </form>
       </div>
+
+      <!-- Liste des étudiants -->
       <div class="bg-white rounded-lg shadow-md">
-        <h2 class="text-xl font-bold p-6 border-b" style="color:#33488E">Liste des étudiants ajoutés</h2>
+        <h2 class="text-xl font-bold p-6 border-b text-[#33488E]">Liste des étudiants ajoutés</h2>
         <table class="min-w-full">
           <thead class="bg-gray-100 text-left">
             <tr>
-              <th class="px-6 py-3 text-left uppercase font-medium">Nom et Prénom</th>
-              <th class="px-6 py-3 text-left uppercase font-medium">CIN</th>
-              <th class="px-6 py-3 text-left uppercase font-medium">Email</th>
-              <th class="px-6 py-3 text-left uppercase font-medium">Filière</th>
-              <th class="px-6 py-3 text-left uppercase font-medium">Actions</th>
+              <th class="px-6 py-3 uppercase font-medium">Nom et Prénom</th>
+              <th class="px-6 py-3 uppercase font-medium">CIN</th>
+              <th class="px-6 py-3 uppercase font-medium">Email</th>
+              <th class="px-6 py-3 uppercase font-medium">Filière</th>
+              <th class="px-6 py-3 uppercase font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="etudiant in etudiants" :key="etudiant.id" :class="[(etudiants.indexOf(etudiant) % 2 === 0 ? 'bg-[#FFF7F0]' : 'bg-[#F7F7F7]'), 'border-b', 'border-[#444]']">
+            <tr v-for="etudiant in etudiants" :key="etudiant.cin" :class="[(etudiants.indexOf(etudiant) % 2 === 0 ? 'bg-[#FFF7F0]' : 'bg-[#F7F7F7]'), 'border-b', 'border-[#444]']">
               <td class="px-6 py-4 flex items-center gap-2">
                 <img :src="etudiant.photo" alt="avatar" class="w-8 h-8 rounded-full" />
                 {{ etudiant.nom }}
@@ -36,7 +40,7 @@
               <td class="px-6 py-4">{{ etudiant.email }}</td>
               <td class="px-6 py-4">{{ etudiant.filiere }}</td>
               <td class="px-6 py-4">
-                <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="supprimerEtudiant(etudiant.id)">DELETE</button>
+                <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="supprimerEtudiant(etudiant.cin)">DELETE</button>
               </td>
             </tr>
             <tr v-if="etudiants.length === 0">
@@ -54,20 +58,18 @@ import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 
-// Récupérer ID du cadre depuis l'URL
 const route = useRoute()
 const idCadre = route.params.idCadre
 
-// Variables
 const nomCadre = ref('')
 const formEtudiant = ref({ cin: '' })
 const etudiants = ref([])
 
-// Charger le nom du cadre via API
+// Charger le nom du cadre
 const chargerNomCadre = async () => {
   try {
     const response = await axios.get(`/api/cadre/${idCadre}`)
-    nomCadre.value = response.data.nom
+    nomCadre.value = response.data.Nom
   } catch (error) {
     console.error('Erreur API:', error)
     alert("Erreur lors de la récupération du cadre.")
@@ -83,25 +85,24 @@ const ajouterEtudiant = async () => {
   }
 
   try {
-    // 1. Vérifier si l'étudiant existe
+    // Vérifier si l'étudiant existe
     const response = await axios.get(`/api/student/cin/${cin}`)
     const data = response.data
 
-    // 2. Vérifier si déjà ajouté
+    // Vérifier si déjà ajouté
     const existe = etudiants.value.find(e => e.cin === data.cin)
     if (existe) {
       alert("Cet étudiant est déjà ajouté.")
       return
     }
 
-    // 3. Associer étudiant au cadre avec API POST
-    await axios.post(`/api/cadre/${idCadre}/etudiant/${data.id}`)
+    // Associer étudiant au cadre
+    await axios.post(`/api/cadre/${idCadre}/etudiant/${data.cin}`)
 
-    // 4. Ajouter dans le tableau après succès
+    // Ajouter dans le tableau
     const nouvelEtudiant = {
-      id: data.id,
-      nom: `${data.nom} ${data.prenom || ''}`,
       cin: data.cin,
+      nom: `${data.nom} ${data.prenom || ''}`,
       email: data.email,
       filiere: data.filiere || 'Non précisé',
       photo: data.photo || '/src/assets/profile.jpg'
@@ -120,19 +121,18 @@ const ajouterEtudiant = async () => {
 }
 
 // Supprimer un étudiant
-const supprimerEtudiant = async (idEtudiant) => {
+const supprimerEtudiant = async (cin) => {
   if (!confirm("Êtes-vous sûr de vouloir supprimer cet étudiant ?")) return
 
   try {
-    await axios.delete(`/api/cadre/${idCadre}/etudiant/${idEtudiant}`)
-    etudiants.value = etudiants.value.filter(e => e.id !== idEtudiant)
+    await axios.delete(`/api/cadre/${idCadre}/etudiant/${cin}`)
+    etudiants.value = etudiants.value.filter(e => e.cin !== cin)
   } catch (error) {
     console.error('Erreur API suppression:', error)
     alert("Erreur lors de la suppression de l'étudiant.")
   }
 }
 
-// Charger au démarrage
 onMounted(() => {
   chargerNomCadre()
 })

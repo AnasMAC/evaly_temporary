@@ -18,7 +18,7 @@ export const addCompetences = async (req, res) => {
       await Promise.all(ind.map(indicateur => 
         Indicateur.create({
           indicateur,
-          id_Competence: competence.id_Competence
+          id_competence: competence.id_Competence
         }, { transaction })
       ));
 
@@ -47,7 +47,7 @@ export const getCompetences = async (req, res) => {
       include: [{
         model: Indicateur,
         as: 'indicateurs',
-        attributes: ['id_indicateur', 'indicateur']
+        attributes: ['id_indicateur', 'indicateur'] // Exclure dans la réponse finale
       }]
     });
     res.status(200).json(competences);
@@ -64,11 +64,11 @@ export const getCompetenceById = async (req, res) => {
       include: [{
         model: Indicateur,
         as: 'indicateurs',
-        attributes: ['id_indicateur', 'indicateur']
+        attributes: ['id_indicateur', 'indicateur'] // Exclure dans la réponse finale
       }]
     });
     
-    if (!competence) return res.status(404).json({ message: 'Non trouvé' });
+    if (!competence) return res.status(404).json({ message: 'Non trouvé', });
     
     res.status(200).json(competence);
   } catch (error) {

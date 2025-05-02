@@ -83,12 +83,12 @@ const routes = [
         component: ProfileView,
       },
       {
-        path: 'add-student',
+        path: '/add-student/:id',
         name: 'AddStudent',
         component: ajouteretudiant,
       },
       {
-        path: 'add-competence',
+        path: '/add-competence/:id',
         name: 'AddCompetence',
         component: ajoutercompetence,
       },
