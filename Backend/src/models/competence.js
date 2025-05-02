@@ -8,9 +8,7 @@ class Competence extends Model{
             through:"referenteil",
             as:'competences',
             foreignKey:{
-                name:'id_Competence',
-                onDelete:'CASCADE',
-                onUpdate:'CASCADE'                
+                name:'id_Competence',              
             },
         });
         this.hasMany(models.Evaluation,

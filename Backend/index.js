@@ -18,7 +18,7 @@ app.use(express.json());
 // Configuration de CORS
 app.use(cors({
   origin: 'http://localhost:5173',  // Frontend
-  methods: ['GET', 'POST', 'PUT', 'DELETE' ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type'],
   credentials: true, // Autoriser les cookies
 }));

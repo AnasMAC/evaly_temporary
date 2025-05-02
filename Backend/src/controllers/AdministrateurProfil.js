@@ -17,9 +17,23 @@ const getAdministrateur = async (req, res) => {
 
     return res.status(200).json(admin);
 
-  }catch(err) {
+  } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
-
-export { getAdministrateur };
+const  getNbrUsers=async(req,res)=>{
+  try{
+  const nbrEtudiants=await Utilisateur.count({where :{role:'etudiant'}})
+  const nbrEnseignants=await Utilisateur.count({where :{role:'enseignant'}})
+  const nbrProfessionnels=   await   Utilisateur.count({where :{role:'professionnel'}})
+const nbrTotal=nbrProfessionnels+nbrEnseignants+nbrEtudiants
+return res.status(200).json({
+  enseignants: nbrEnseignants,
+  etudiants: nbrEtudiants,
+  professionnels: nbrProfessionnels,
+  total: nbrTotal
+});
+}catch(e){
+  res.status(500).json({message:e.message})
+}}
+export { getAdministrateur, getNbrUsers}

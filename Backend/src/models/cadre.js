@@ -8,8 +8,6 @@ class Cadre extends Model {
             as: 'participants',
             foreignKey: {
                 name: 'id_cadre',
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
             }
         });
         this.belongsTo(models.Professionnel),
@@ -18,8 +16,6 @@ class Cadre extends Model {
             as: 'superviseurs',
             foreignKey: {
                 name: 'id_cadre',
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
             }
         });
         this.belongsToMany(models.Competence, {
@@ -27,8 +23,6 @@ class Cadre extends Model {
             as: 'competences',
             foreignKey: {
                 name: 'id_cadre',
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
             },
         });
         this.hasMany(models.Evaluation, {

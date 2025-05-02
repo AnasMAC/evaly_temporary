@@ -12,8 +12,8 @@ class Enseignant extends Model {
       as: 'superviseurs',
       foreignKey: {
         name:'id_enseignant',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'},
+
+      },
     });
   }
 }

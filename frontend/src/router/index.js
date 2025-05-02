@@ -16,10 +16,13 @@ import gestioncadres from '../views/cadre_crud/gestioncadres.vue'
 import AuthContainer from '../components/auth/AuthContainer.vue'
 import MainLayout from '../components/layout/MainLayout.vue'
 
+
 // Dashboard placeholder
-const Dashboard = {
-  template: '<div>Tableau de bord (à implémenter)</div>'
-}
+// const Dashboard = {
+//   template: '<div>Tableau de bord (à implémenter)</div>'
+// }
+const Dashboard = () => import('../views/cadre_crud/Dashboard.vue')
+const Profile = () => import('../views/cadre_crud/Profile.vue')
 // Signalement placeholder
 const Signalement = {
   template: '<div>Page de signalement (à implémenter)</div>'

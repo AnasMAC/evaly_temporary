@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: '../.env' });
 export function generateAccessToken(user) {
   const ACCESS_SECRET = 'accestoken'; // Hardcodé
   return jwt.sign(

@@ -5,7 +5,7 @@ import { generateAccessToken, generateRefreshToken } from "../assets/tokens.js";
 import { sendVerificationEmail } from "../assets/email.js";
 import crypto from "crypto";
 import dotenv from "dotenv";
-dotenv.config();
+dotenv.config({ path: '../.env' });
 import Utilisateur from '../models/utilisateur.js';
 import VerificationCode from '../models/VerificationCode.js';
 import refreshToken from '../models/RefreshToken.js';
