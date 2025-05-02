@@ -42,7 +42,11 @@ Evaluation.init(
             allowNull: true
         },
         Anonymat:{
-            type: DataTypes.BOOLEAN,
+            type: DataTypes.ENUM(
+                'ANONYME',
+                'PARTIELMENT ANONYME',
+                'NON ANONYME'
+            ),
             allowNull: false
         },
     },

@@ -9,12 +9,12 @@ export const getAllEvaluations = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['nom', 'prenom','role'],
+                    attributes: ['cin','nom', 'prenom','role'],
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['promotion', 'filiere'],
+                    attributes: ['cin','promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
@@ -26,15 +26,16 @@ export const getAllEvaluations = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: [ 'Nom']
+                    attributes: [ 'id_cadre','Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: [ 'Nom']
+                    attributes: [ 'id_competence','Nom']
                 }
             ]
         });
+        res.status(200).json(evaluations);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -51,12 +52,12 @@ export const getEvaluationById = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['nom', 'prenom','role'],
+                    attributes: ['cin','nom', 'prenom','role'],
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['promotion', 'filiere'],
+                    attributes: ['cin','promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
@@ -68,12 +69,12 @@ export const getEvaluationById = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: [ 'Nom']
+                    attributes: ['id_cadre', 'Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['Nom']
+                    attributes: ['id_competence','Nom']
                 }
             ]
         });
@@ -88,31 +89,45 @@ export const getEvaluationById = async (req, res) => {
 
 export const getEvaluationforEtudiant = async (req, res) => {
     const id_etudiant = req.params.id_etudiant;
-    if (id_etudiant) {
+    if (!id_etudiant) {
         return res.status(400).json({ message: "CIN is required" });
     }
-    const evaluations = await Evaluation.findAll({
+    const co_evaluations = await Evaluation.findAll({
         where: {
-            cinEvalué: id_etudiant
+            cinEvalué: id_etudiant,
+            cinEvaluateur:id_etudiant
         },
         include: [
             {
                 model: Evaluation.sequelize.models.Utilisateur,
                 as: 'evaluateur',
-                attributes: ['nom', 'prenom','role'],
+                attributes: ['cin','nom', 'prenom','role'],
+            },
+            {
+                model: Evaluation.sequelize.models.Etudiant,
+                as: 'evalué',
+                attributes: ['cin','promotion', 'filiere'],
+                include: [
+                    {
+                        model: Evaluation.sequelize.models.Utilisateur,
+                        as: 'base',
+                        attributes: ['nom', 'prenom']
+                    }
+                ]
             },
             {
                 model: Evaluation.sequelize.models.Cadre,
                 as: 'cadre',
-                attributes: [ 'Nom']
+                attributes: [ 'id_cadre','Nom']
             },
             {
                 model: Evaluation.sequelize.models.Competence,
                 as: 'competence',
-                attributes: ['Nom']
+                attributes: [ 'id_competence','Nom']
             }
         ]
-    })
+    });
+    res.status(200).json(evaluations);
 }
 
 export const getEvaluationforProf=async (req, res) => {
