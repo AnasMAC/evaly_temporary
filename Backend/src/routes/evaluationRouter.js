@@ -4,16 +4,15 @@ import {
     getEvaluationById,
     getEvaluationforEtudiant,
     getEvaluationforProf,
-    createEvaluation,
 } from "../controllers/evaluationController.js";
 
 const Router = express.Router();
 
 Router.get("/evaluation", getAllEvaluations);
 Router.get("/evaluation/:id", getEvaluationById);
-Router.get("/evaluation/etudiant/:cin", getEvaluationforEtudiant);
-Router.get("/evaluation/prof/:cin", getEvaluationforProf);
-Router.post("/evaluation", createEvaluation);
+Router.get("/evaluation/etudiant/:id_etudiant", getEvaluationforEtudiant);
+Router.get("/evaluation/prof/:id_enseignant", getEvaluationforProf);
+
 
 export default Router;
 

@@ -29,10 +29,6 @@ Evaluation.init(
             primaryKey: true,
             autoIncrement: true
         },
-        Date:{
-            type: DataTypes.DATE,
-            allowNull: false
-        },
         Score:{
             type: DataTypes.FLOAT,
             allowNull: false
