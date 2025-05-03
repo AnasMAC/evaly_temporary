@@ -10,12 +10,12 @@ export const getAllEvaluations = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['cin', 'nom', 'prenom', 'role']
+                    attributes: ['nom', 'prenom', 'role']
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['cin', 'promotion', 'filiere'],
+                    attributes: ['promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
@@ -90,6 +90,23 @@ export const getEvaluationById = async (req, res) => {
     }
 }
 
+function filterAnonyme(evaluations) {
+    return evaluations.map(evaluation => {
+        if (evaluation.Anonymat.trim().toUpperCase() === 'ANONYME') {
+            evaluation.cinEvaluateur = 'ANONYME';
+            evaluation.evaluateur.nom = 'ANONYME';
+            evaluation.evaluateur.prenom = 'ANONYME';
+            evaluation.evaluateur.cin = 'ANONYME';
+            evaluation.evaluateur.role = 'ANONYME';
+        } else if (evaluation.Anonymat.trim().toUpperCase() === 'PARTIELMENT ANONYME') {
+            evaluation.cinEvaluateur = 'ANONYME';
+            evaluation.evaluateur.nom = 'ANONYME';
+            evaluation.evaluateur.prenom = 'ANONYME';
+            evaluation.evaluateur.cin = 'ANONYME';
+        } 
+        return evaluation;
+    });
+}
 export const getEvaluationforEtudiant = async (req, res) => {
     const id_etudiant = req.params.id_etudiant;
     if (!id_etudiant) {
@@ -104,12 +121,12 @@ export const getEvaluationforEtudiant = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['cin', 'nom', 'prenom', 'role']
+                    attributes: ['nom', 'prenom', 'role']
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['cin', 'promotion', 'filiere'],
+                    attributes: ['promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
@@ -131,6 +148,7 @@ export const getEvaluationforEtudiant = async (req, res) => {
             ],
             order: [['createdAt', 'DESC']]
         });
+        
 
         const selfEvaluations = tout_evaluations.filter(evaluation => evaluation.cinEvaluateur === id_etudiant);
         const otherEvaluations = filterAnonyme(tout_evaluations.filter(evaluation => evaluation.cinEvaluateur !== id_etudiant));
@@ -142,22 +160,6 @@ export const getEvaluationforEtudiant = async (req, res) => {
     }
 };
 
-function filterAnonyme(evaluations) {
-    return evaluations.map(evaluation => {
-        const evaluationJson = evaluation.toJSON();
-        if (evaluationJson.Anonymat === 'ANONYME') {
-            evaluationJson.evaluateur.nom = 'ANONYME';
-            evaluationJson.evaluateur.prenom = 'ANONYME';
-            evaluationJson.evaluateur.cin = 'ANONYME';
-            evaluationJson.evaluateur.role = 'ANONYME';
-        } else if (evaluationJson.Anonymat === 'PARTIELLEMENT ANONYME') {
-            evaluationJson.evaluateur.nom = 'ANONYME';
-            evaluationJson.evaluateur.prenom = 'ANONYME';
-            evaluationJson.evaluateur.cin = 'ANONYME';
-        }
-        return evaluationJson;
-    });
-}
 
 export const getEvaluationforProf = async (req, res) => {
     const id_enseignant = req.params.id_enseignant; 
@@ -173,12 +175,12 @@ export const getEvaluationforProf = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['cin', 'nom', 'prenom', 'role']
+                    attributes: ['nom', 'prenom', 'role']
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['cin', 'promotion', 'filiere'],
+                    attributes: ['promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
