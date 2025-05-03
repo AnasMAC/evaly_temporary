@@ -22,7 +22,7 @@ import MainLayout from '../components/layout/MainLayout.vue'
 //   template: '<div>Tableau de bord (à implémenter)</div>'
 // }
 const Dashboard = () => import('../views/cadre_crud/Dashboard.vue')
-const Profile = () => import('../views/cadre_crud/Profile.vue')
+const Profile = () => import('../views/user_crud/ProfileView.vue')
 // Signalement placeholder
 const Signalement = {
   template: '<div>Page de signalement (à implémenter)</div>'

@@ -5,10 +5,11 @@ const { Utilisateur } = db;
 
 const changePwd = (roleAttendu) => async (req, res) => {  
   try {
-    const { cin } = req.params;
+    const administrateurId  = req.params.administrateurId;
+    console.log(`cin: ${administrateurId}`);
     const { oldPwd, newPwd, confirmPwd } = req.body;  
 
-    const utilisateur = await Utilisateur.findByPk(cin, {
+    const utilisateur = await Utilisateur.findByPk(administrateurId, {
       attributes: ['cin','pwd', 'role']  
     });
 

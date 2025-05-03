@@ -7,7 +7,7 @@ import {
 } from '../controllers/ProfessionnelControllers.js';
 import checkAdmin from '../middlewares/verification.js';
 const router = express.Router();
-router.use('/:administrateurId', checkAdmin);
+//router.use('/:administrateurId', checkAdmin);
 router.post('/:administrateurId', createProfessionnel);
 router.get('/:administrateurId', getAllProfessionnels);
 router.put('/:administrateurId', updateProfessionnel);

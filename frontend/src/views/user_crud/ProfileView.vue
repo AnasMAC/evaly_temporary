@@ -23,12 +23,7 @@
               alt="Photo de profil" 
               class="w-20 h-20 rounded-full object-cover border-2 border-orange-400"
             />
-            <div class="absolute bottom-0 right-0 bg-orange-500 p-1 rounded-full cursor-pointer">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
+            <!-- Suppression du bouton d'édition de la photo de profil -->
           </div>
         </div>
         <div class="user-info">
@@ -59,7 +54,8 @@
               type="text" 
               v-model="userProfile.nom"
               placeholder="Votre nom" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+              class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+              disabled
             />
           </div>
           <div class="form-group">
@@ -68,7 +64,8 @@
               type="text" 
               v-model="userProfile.prenom"
               placeholder="Votre prénom" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+              class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+              disabled
             />
           </div>
           <div class="form-group">
@@ -77,7 +74,8 @@
               type="email" 
               v-model="userProfile.email"
               placeholder="Votre email" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all outline-none"
+              class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-500 cursor-not-allowed"
+              disabled
             />
           </div>
           <div class="form-group">
@@ -99,17 +97,10 @@
           </div>
         </div>
         
-        <div class="mt-6 flex justify-end">
-          <button 
-            @click="updateProfile"
-            class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 transition-colors shadow-sm"
-          >
-            Enregistrer
-          </button>
-        </div>
+        <!-- Suppression du bouton d'enregistrement pour les infos personnelles -->
       </div>
 
-      <!-- Section mot de passe -->
+      <!-- Section mot de passe - reste inchangée -->
       <div class="password-section bg-gray-50 p-5 rounded-lg">
         <h3 class="text-lg font-medium text-gray-800 mb-4">Sécurité</h3>
         
@@ -254,6 +245,7 @@ export default {
     togglePasswordVisibility(field) {
       this.passwordVisibility[field] = !this.passwordVisibility[field];
     },
+    // Nous gardons la méthode updateProfile mais elle ne sera plus utilisée puisque le bouton a été supprimé
     async updateProfile() {
       try {
         if (!this.administrateurId) {
@@ -299,9 +291,9 @@ export default {
           this.$toast?.error("ID administrateur non trouvé") || alert("ID administrateur non trouvé");
           return;
         }
-        
+        console.log(this.administrateurId)
         // Appel à l'API pour changer le mot de passe
-        await axios.post(`http://localhost:3000/adminProfil/changePwd/${this.administrateurId}`, {
+        await axios.patch(`http://localhost:3000/adminProfil/changepwd/${this.administrateurId}`, {
           oldPwd: this.passwords.old,
           newPwd: this.passwords.new,
           confirmPwd: this.passwords.confirm
