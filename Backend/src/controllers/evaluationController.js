@@ -1,7 +1,7 @@
 
 import db from '../models/index.js';
-const { Cadre, Evaluation} = db;
-
+const {Evaluation,sequelize} = db;
+import { Op } from 'sequelize';
 
 export const getAllEvaluations = async (req, res) => {
     try {
@@ -76,7 +76,7 @@ export const getEvaluationById = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom']
+                    attributes: ['id_Competence', 'Nom','Categorie']
                 }
             ],
             
@@ -107,15 +107,69 @@ function filterAnonyme(evaluations) {
         return evaluation;
     });
 }
-export const getEvaluationforEtudiant = async (req, res) => {
+// export const getEvaluationforEtudiant = async (req, res) => {
+//     const id_etudiant = req.params.id_etudiant;
+//     if (!id_etudiant) {
+//         return res.status(400).json({ message: "CIN is required" });
+//     }
+//     try {
+//         const tout_evaluations = await Evaluation.findAll({
+//             where: {
+//                 cinEvalué: id_etudiant,
+//             },
+//             include: [
+//                 {
+//                     model: Evaluation.sequelize.models.Utilisateur,
+//                     as: 'evaluateur',
+//                     attributes: ['nom', 'prenom', 'role']
+//                 },
+//                 {
+//                     model: Evaluation.sequelize.models.Etudiant,
+//                     as: 'evalué',
+//                     attributes: ['promotion', 'filiere'],
+//                     include: [
+//                         {
+//                             model: Evaluation.sequelize.models.Utilisateur,
+//                             as: 'base',
+//                             attributes: ['nom', 'prenom']
+//                         }
+//                     ]
+//                 },
+//                 {
+//                     model: Evaluation.sequelize.models.Cadre,
+//                     as: 'cadre',
+//                     attributes: ['id_cadre', 'Nom']
+//                 },
+//                 {
+//                     model: Evaluation.sequelize.models.Competence,
+//                     as: 'competence',
+//                     attributes: ['id_Competence', 'Nom']
+//                 }
+//             ],
+//             order: [['createdAt', 'DESC']]
+//         });
+        
+
+//         const selfEvaluations = tout_evaluations.filter(evaluation => evaluation.cinEvaluateur === id_etudiant);
+//         const otherEvaluations = filterAnonyme(tout_evaluations.filter(evaluation => evaluation.cinEvaluateur !== id_etudiant));
+
+//         const evaluations = [...selfEvaluations, ...otherEvaluations];
+//         res.status(200).json(evaluations);
+//     } catch (error) {
+//         res.status(500).json({ message: error.message });
+//     }
+// };
+
+export const getCo_evaluationforEtudiant = async (req, res) => {
     const id_etudiant = req.params.id_etudiant;
     if (!id_etudiant) {
         return res.status(400).json({ message: "CIN is required" });
     }
     try {
-        const tout_evaluations = await Evaluation.findAll({
+        const evaluations = await Evaluation.findAll({
             where: {
                 cinEvalué: id_etudiant,
+                cinEvaluateur: { [Op.ne]: id_etudiant },
             },
             include: [
                 {
@@ -143,23 +197,65 @@ export const getEvaluationforEtudiant = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom']
+                    attributes: ['id_Competence', 'Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
         });
-        
-
-        const selfEvaluations = tout_evaluations.filter(evaluation => evaluation.cinEvaluateur === id_etudiant);
-        const otherEvaluations = filterAnonyme(tout_evaluations.filter(evaluation => evaluation.cinEvaluateur !== id_etudiant));
-
-        const evaluations = [...selfEvaluations, ...otherEvaluations];
+        const otherEvaluations = filterAnonyme(evaluations);
+        res.status(200).json(otherEvaluations);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: error.message });
+    }
+}
+export const getauto_EvaluationforEtudiant = async (req, res) => {
+    const id_etudiant = req.params.id_etudiant;
+    if (!id_etudiant) {
+        return res.status(400).json({ message: "CIN is required" });
+    }
+    try {
+        const evaluations = await Evaluation.findAll({
+            where: {
+                cinEvalué: id_etudiant,
+                cinEvaluateur: id_etudiant
+            },
+            include: [
+                {
+                    model: Evaluation.sequelize.models.Utilisateur,
+                    as: 'evaluateur',
+                    attributes: ['nom', 'prenom', 'role']
+                },
+                {
+                    model: Evaluation.sequelize.models.Etudiant,
+                    as: 'evalué',
+                    attributes: ['promotion', 'filiere'],
+                    include: [
+                        {
+                            model: Evaluation.sequelize.models.Utilisateur,
+                            as: 'base',
+                            attributes: ['nom', 'prenom']
+                        }
+                    ]
+                },
+                {
+                    model: Evaluation.sequelize.models.Cadre,
+                    as: 'cadre',
+                    attributes: ['id_cadre', 'Nom']
+                },
+                {
+                    model: Evaluation.sequelize.models.Competence,
+                    as: 'competence',
+                    attributes: ['id_Competence', 'Nom','Categorie']
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
         res.status(200).json(evaluations);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
-};
-
+}
 
 export const getEvaluationforProf = async (req, res) => {
     const id_enseignant = req.params.id_enseignant; 
@@ -197,7 +293,7 @@ export const getEvaluationforProf = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom']
+                    attributes: ['id_Competence', 'Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
