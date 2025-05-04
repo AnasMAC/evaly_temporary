@@ -27,12 +27,12 @@ export const getAllEvaluations = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
+                    attributes: ['Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom']
+                    attributes: ['Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
@@ -54,12 +54,12 @@ export const getEvaluationById = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Utilisateur,
                     as: 'evaluateur',
-                    attributes: ['cin', 'nom', 'prenom', 'role']
+                    attributes: ['nom', 'prenom', 'role']
                 },
                 {
                     model: Evaluation.sequelize.models.Etudiant,
                     as: 'evalué',
-                    attributes: ['cin', 'promotion', 'filiere'],
+                    attributes: ['promotion', 'filiere'],
                     include: [
                         {
                             model: Evaluation.sequelize.models.Utilisateur,
@@ -71,12 +71,12 @@ export const getEvaluationById = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
+                    attributes: ['Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom','Categorie']
+                    attributes: ['Nom','Categorie']
                 }
             ],
             
@@ -153,7 +153,7 @@ function filterAnonyme(evaluations) {
 //         const selfEvaluations = tout_evaluations.filter(evaluation => evaluation.cinEvaluateur === id_etudiant);
 //         const otherEvaluations = filterAnonyme(tout_evaluations.filter(evaluation => evaluation.cinEvaluateur !== id_etudiant));
 
-//         const evaluations = [...selfEvaluations, ...otherEvaluations];
+//         const evaluations = {...selfEvaluations, ...otherEvaluations};
 //         res.status(200).json(evaluations);
 //     } catch (error) {
 //         res.status(500).json({ message: error.message });
@@ -192,12 +192,12 @@ export const getCo_evaluationforEtudiant = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
+                    attributes: ['Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom','Categorie']
+                    attributes: ['Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
@@ -241,12 +241,12 @@ export const getauto_EvaluationforEtudiant = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
+                    attributes: ['Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom','Categorie']
+                    attributes: ['Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
@@ -288,12 +288,12 @@ export const getEvaluationforProf = async (req, res) => {
                 {
                     model: Evaluation.sequelize.models.Cadre,
                     as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
+                    attributes: ['Nom']
                 },
                 {
                     model: Evaluation.sequelize.models.Competence,
                     as: 'competence',
-                    attributes: ['id_Competence', 'Nom','Categorie']
+                    attributes: ['Nom','Categorie']
                 }
             ],
             order: [['createdAt', 'DESC']]
@@ -303,3 +303,56 @@ export const getEvaluationforProf = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+export const getvoirplus = async (req, res) => {
+    const id_enseignant = req.params.id_enseignant;
+    if (!id_enseignant) {
+        return res.status(400).json({ message: "CIN is required" });
+    }
+    const id_etudiant = req.params.id_etudiant;
+    if (!id_etudiant) {
+        return res.status(400).json({ message: "CIN is required" });
+    }
+    try {
+        const evaluations = await Evaluation.findAll({
+            where: {
+                cinEvaluateur: id_enseignant,
+                cinEvalué: id_etudiant
+            },
+            include: [
+                {
+                    model: Evaluation.sequelize.models.Utilisateur,
+                    as: 'evaluateur',
+                    attributes: ['nom', 'prenom', 'role']
+                },
+                {
+                    model: Evaluation.sequelize.models.Etudiant,
+                    as: 'evalué',
+                    attributes: ['promotion', 'filiere'],
+                    include: [
+                        {
+                            model: Evaluation.sequelize.models.Utilisateur,
+                            as: 'base',
+                            attributes: ['nom', 'prenom']
+                        }
+                    ]
+                },
+                {
+                    model: Evaluation.sequelize.models.Cadre,
+                    as: 'cadre',
+                    attributes: ['Nom']
+                },
+                {
+                    model: Evaluation.sequelize.models.Competence,
+                    as: 'competence',
+                    attributes: ['Nom','Categorie']
+                }
+            ],
+            order: [['createdAt', 'DESC']]
+        });
+        res.status(200).json(evaluations);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+
+}
