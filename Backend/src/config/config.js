@@ -2,23 +2,23 @@
 
 export default {
   development: {
-    username: 'pc',
-    password: 'anas',
-    database: 'test3',
+    username: 'postgres',
+    password: '1234',
+    database: 'testSequelize',
     host: '127.0.0.1',
     dialect: 'postgres',
   },
   test: {
     username: 'postgres',
-    password: 'said',
-    database: 'evalydb',
+    password: '1234',
+    database: 'testSequelize',
     host: '127.0.0.1',
     dialect: 'postgres',
   },
   production: {
-    username: 'pc',
-    password: 'anas',
-    database: 'evaly',
+    username: 'postgres',
+    password: '1234',
+    database: 'testSequelize',
     host: '127.0.0.1',
     dialect: 'postgres',
   },

@@ -6,11 +6,11 @@ import bcrypt from "bcryptjs";
     console.log(' Connexion OK');
     const hashedAdminPwd = await bcrypt.hash('admin1234', 10); 
     const admin = await db.Utilisateur.create({
-      cin : 'KB2269',
+      cin : 'K600609',
       pwd : hashedAdminPwd,
       nom: 'nichan',
       prenom : 'said',
-      email : 'saidnichane40@gmail.com',
+      email : 'aminahd@gmail.com',
       role : 'administrateur'
     });
 

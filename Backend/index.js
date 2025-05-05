@@ -11,7 +11,11 @@ import adminRouter from "./src/routes/cadreRouter.js";
 import CompetenceRouter from "./src/routes/CompetenceRouter.js";
 import StatiqueRouter from "./src/routes/statistiqueRouter.js";
 import EvaluationRouter from "./src/routes/evaluationRouter.js";
-
+import Evaluation from "./src/routes/Evaluation.js";
+import EtudiantProfil from './src/routes/EtudiantProfil.js'
+import EnseignantProfil from './src/routes/EnseignantProfil.js'
+import ProfessionnelProfil from './src/routes/ProfessionnelProfil.js'
+import indicateurRoutes from './src/routes/indicateur.js';
 const app = express();
 app.use(express.json());
 
@@ -25,7 +29,11 @@ app.use(cors({
 
 // Middleware pour parser les cookies
 app.use(cookieParser());
-
+app.use('/',EnseignantProfil)
+app.use('/',EtudiantProfil)
+app.use('/',ProfessionnelProfil)
+app.use('/', indicateurRoutes);
+app.use('/', Evaluation);
 // Routes de l'API
 app.use('/api/etudiants', etudiantRoutes);
 app.use('/api/enseignants', enseignantRoutes);
