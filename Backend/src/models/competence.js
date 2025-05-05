@@ -5,7 +5,7 @@ class Competence extends Model{
     static associate(models){
         this.belongsToMany(models.Cadre,
         {
-            through:"referenteil",
+            through:"referentiel",
             as:'competences',
             foreignKey:{
                 name:'id_Competence',
@@ -42,7 +42,7 @@ Competence.init(
             type:DataTypes.STRING,
             allowNull: false
         },
-        Descreption:{
+        Description:{
             type:DataTypes.STRING,
             allowNull: false
         }

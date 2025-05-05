@@ -2,9 +2,9 @@
 
 export default {
   development: {
-    username: 'pc',
-    password: 'anas',
-    database: 'evalytest',
+    username: 'postgres',
+    password: '1234',
+    database: 'testSequelize',
     host: '127.0.0.1',
     dialect: 'postgres',
   },

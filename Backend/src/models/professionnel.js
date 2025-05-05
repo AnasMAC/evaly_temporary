@@ -9,7 +9,6 @@ class Professionnel extends Model {
     });
     this.hasMany(models.Cadre, {
       as: 'encadrant',
-      foreignKey: 'cin'
     });
   }
 }

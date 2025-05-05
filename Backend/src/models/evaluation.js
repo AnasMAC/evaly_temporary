@@ -31,7 +31,8 @@ Evaluation.init(
         },
         Date:{
             type: DataTypes.DATE,
-            allowNull: false
+            allowNull: false,
+            
         },
         Score:{
             type: DataTypes.FLOAT,

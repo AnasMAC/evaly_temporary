@@ -7,13 +7,12 @@ class Enseignant extends Model {
       as: 'base',
       foreignKey: 'cin'
     });
-    this.belongsToMany(models.Cadre, {
-      through: 'enseignant_cadre',
+    this.hasOne(models.Cadre, {
       as: 'superviseurs',
       foreignKey: {
-        name:'id_enseignant',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE'},
+        name:'cinEnseignant',
+
+      },
     });
   }
 }

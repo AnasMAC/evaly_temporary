@@ -1,0 +1,299 @@
+openapi: 3.0.0
+info:
+  title: API Évaluation
+  description: Documentation complète de l'API d'évaluation
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+    description: Serveur de développement
+
+paths:
+  /api/cadres:
+    post:
+      tags: ["Cadres"]
+      summary: "Afficher la liste des cadres"
+      description: "Retourne les cadres associés à un utilisateur en fonction de son CIN et rôle."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cin:
+                  type: string
+                  example: "AB12345"
+                role:
+                  type: string
+                  enum: ["etudiant", "enseignant", "professionnel"]
+                  example: "enseignant"
+              required:
+                - cin
+                - role
+      responses:
+        200:
+          description: "Liste des cadres récupérée avec succès."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Cadre"
+        403:
+          description: "Accès refusé (rôle ou CIN invalide)."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Accès non autorisé"
+
+  /api/cadres/{cadreId}/etudiants:
+    post:
+      tags: ["Cadres"]
+      summary: "Afficher les étudiants associés à un cadre"
+      description: "Vérifie les permissions (via CIN et rôle) et retourne la liste des étudiants."
+      parameters:
+        - name: cadreId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "cadre-123"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cin:
+                  type: string
+                  example: "CD67890"
+                role:
+                  type: string
+                  enum: ["enseignant", "superviseur"]
+                  example: "enseignant"
+              required:
+                - cin
+                - role
+      responses:
+        200:
+          description: "Liste des étudiants récupérée."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Etudiant"
+        403:
+          description: "Accès refusé (l'utilisateur n'a pas les droits)."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Permissions insuffisantes"
+
+  /api/evaluation/contexte/{cadreId}/{cinEvaluateur}/{cinEvalue}:
+    post:
+      tags: ["Évaluation"]
+      summary: "Vérifier le contexte d'évaluation"
+      description: "Détermine si l'évaluateur a le droit d'évaluer (auto/co-évaluation/superviseur)."
+      parameters:
+        - name: cadreId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "eval-cadre-456"
+        - name: cinEvaluateur
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "EF13579"
+        - name: cinEvalue
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "GH24680"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                cin:
+                  type: string
+                  example: "EF13579"
+                role:
+                  type: string
+                  enum: ["etudiant", "enseignant", "superviseur"]
+                  example: "enseignant"
+              required:
+                - cin
+                - role
+      responses:
+        200:
+          description: "Contexte d'évaluation valide."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  typeEvaluation:
+                    type: string
+                    enum: ["auto", "co", "superviseur"]
+                    example: "co"
+                  isValid:
+                    type: boolean
+                    example: true
+        403:
+          description: "Contexte invalide (permissions refusées)."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Contexte d'évaluation non valide"
+
+  /api/evaluation/{cadreId}/{cinEvaluateur}/{cinEvalue}:
+    post:
+      tags: ["Évaluation"]
+      summary: "Soumettre une évaluation"
+      description: "Enregistre une évaluation après vérification des permissions."
+      parameters:
+        - name: cadreId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "eval-cadre-789"
+        - name: cinEvaluateur
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "IJ35790"
+        - name: cinEvalue
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "KL46801"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                id_competence:
+                  type: integer
+                  format: int32
+                  example: 1
+                score:
+                  type: number
+                  format: float
+                  minimum: 0
+                  maximum: 5
+                  example: 4.5
+                commentaire:
+                  type: string
+                  example: "Très bon travail"
+                anonymat:
+                  type: string
+                  enum:
+                    - 'ANONYME'
+                    - 'PARTIELMENT ANONYME'
+                    - 'NON ANONYME'
+                  example: 'ANONYME'
+                cin:
+                  type: string
+                  example: "IJ35790"
+                role:
+                  type: string
+                  example: "enseignant"
+              required:
+                - id_competence
+                - score
+                - anonymat
+                - cin
+                - role
+      responses:
+        201:
+          description: "Évaluation enregistrée."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Évaluation enregistrée avec succès"
+        400:
+          description: "Données invalides (ex: score hors limites)."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Le score doit être entre 0 et 5"
+        403:
+          description: "Permissions insuffisantes."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Vous n'avez pas les droits pour cette évaluation"
+
+components:
+  schemas:
+    Cadre:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "cadre-123"
+        nom:
+          type: string
+          example: "Cadre d'évaluation 2023"
+        description:
+          type: string
+          example: "Évaluation des compétences techniques"
+      required:
+        - id
+        - nom
+
+    Etudiant:
+      type: object
+      properties:
+        cin:
+          type: string
+          example: "MN12345"
+        nom:
+          type: string
+          example: "Dupont"
+        prenom:
+          type: string
+          example: "Jean"
+      required:
+        - cin
+        - nom

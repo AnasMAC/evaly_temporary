@@ -11,7 +11,7 @@ class Etudiant extends Model {
     this.belongsToMany(models.Cadre, {
       through: 'etudiant_cadre',
       as: 'participants',
-      foreignKey: 'cin'
+      foreignKey: 'cinEtudiant'
     });
     this.hasMany(models.Evaluation, {
       as: 'evaluations',

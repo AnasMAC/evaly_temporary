@@ -1,219 +1,328 @@
+// controllers/evaluationController.js
 import db from '../models/index.js';
-const { Cadre, Evaluation} = db;
+const {
+  Cadre,
+  Etudiant,
+  Enseignant,
+  Professionnel,
+  Utilisateur,
+  Competence,
+  Indicateur,
+  Evaluation
+} = db;
 
+// ----------------------
+// Vérifie si l'user appartient au cadre
+// ----------------------
+const checkCadreAccess = (user, cadre) => {
+  switch (user.role) {
+    case 'etudiant':
+      return cadre.participants?.some(p => p.cin === user.cin);
 
-export const getAllEvaluations = async (req, res) => {
-    try {
-        const evaluations = await Evaluation.findAll({
-            include: [
-                {
-                    model: Evaluation.sequelize.models.Utilisateur,
-                    as: 'evaluateur',
-                    attributes: ['cin','nom', 'prenom','role'],
-                },
-                {
-                    model: Evaluation.sequelize.models.Etudiant,
-                    as: 'evalué',
-                    attributes: ['cin','promotion', 'filiere'],
-                    include: [
-                        {
-                            model: Evaluation.sequelize.models.Utilisateur,
-                            as: 'base',
-                            attributes: ['nom', 'prenom']
-                        }
-                    ]
-                },
-                {
-                    model: Evaluation.sequelize.models.Cadre,
-                    as: 'cadre',
-                    attributes: [ 'id_cadre','Nom']
-                },
-                {
-                    model: Evaluation.sequelize.models.Competence,
-                    as: 'competence',
-                    attributes: [ 'id_competence','Nom']
-                }
-            ]
+    case 'enseignant':
+      // superviseurs est un objet unique
+      return cadre.superviseurs?.cin === user.cin;
+
+    case 'professionnel':
+      // Professionnel exposé sans alias
+      return cadre.Professionnel?.cin === user.cin;
+
+    default:
+      return false;
+  }
+};
+
+// ----------------------
+// 1) Lister les cadres auxquels appartient un user
+// ----------------------
+export const getUserCadres = async (req, res) => {
+  try {
+    const { cin, role } = req.body;
+    if (!cin || !role) {
+      return res.status(400).json({
+        message: "Informations utilisateur manquantes (cin, role requis)"
+      });
+    }
+
+    let cadres;
+    switch (role) {
+      case 'etudiant':
+        cadres = await Cadre.findAll({
+          include: [{
+            model: Etudiant,
+            as: 'participants',
+            where: { cin },
+            through: { attributes: [] }
+          }]
         });
-        res.status(200).json(evaluations);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
+        break;
 
-export const getEvaluationById = async (req, res) => {
-    const id  = req.params.id;
-    if (!id) {
-        return res.status(400).json({ message: "ID is required" });
-    }
-    try {
-        const evaluation = await Evaluation.findByPk(id, {
-            include: [
-                {
-                    model: Evaluation.sequelize.models.Utilisateur,
-                    as: 'evaluateur',
-                    attributes: ['cin','nom', 'prenom','role'],
-                },
-                {
-                    model: Evaluation.sequelize.models.Etudiant,
-                    as: 'evalué',
-                    attributes: ['cin','promotion', 'filiere'],
-                    include: [
-                        {
-                            model: Evaluation.sequelize.models.Utilisateur,
-                            as: 'base',
-                            attributes: ['nom', 'prenom']
-                        }
-                    ]
-                },
-                {
-                    model: Evaluation.sequelize.models.Cadre,
-                    as: 'cadre',
-                    attributes: ['id_cadre', 'Nom']
-                },
-                {
-                    model: Evaluation.sequelize.models.Competence,
-                    as: 'competence',
-                    attributes: ['id_competence','Nom']
-                }
-            ]
+      case 'enseignant':
+        cadres = await Cadre.findAll({
+          include: [{
+            model: Enseignant,
+            as: 'superviseurs',
+            where: { cin }
+          }]
         });
-        if (!evaluation) {
-            return res.status(404).json({ message: "Evaluation not found" });
-        }
-        res.status(200).json(evaluation);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
+        break;
 
-export const getEvaluationforEtudiant = async (req, res) => {
-    const id_etudiant = req.params.id_etudiant;
-    if (!id_etudiant) {
-        return res.status(400).json({ message: "CIN is required" });
+      case 'professionnel':
+        cadres = await Cadre.findAll({
+          include: [{
+            model: Professionnel,
+            where: { cin }
+          }]
+        });
+        break;
+
+      default:
+        return res.status(403).json({ message: "Rôle non reconnu" });
     }
-    const co_evaluations = await Evaluation.findAll({
-        where: {
-            cinEvalué: id_etudiant,
-            cinEvaluateur:id_etudiant
-        },
-        include: [
-            {
-                model: Evaluation.sequelize.models.Utilisateur,
-                as: 'evaluateur',
-                attributes: ['cin','nom', 'prenom','role'],
-            },
-            {
-                model: Evaluation.sequelize.models.Etudiant,
-                as: 'evalué',
-                attributes: ['cin','promotion', 'filiere'],
-                include: [
-                    {
-                        model: Evaluation.sequelize.models.Utilisateur,
-                        as: 'base',
-                        attributes: ['nom', 'prenom']
-                    }
-                ]
-            },
-            {
-                model: Evaluation.sequelize.models.Cadre,
-                as: 'cadre',
-                attributes: [ 'id_cadre','Nom']
-            },
-            {
-                model: Evaluation.sequelize.models.Competence,
-                as: 'competence',
-                attributes: [ 'id_competence','Nom']
-            }
-        ]
+
+    return res.status(200).json(cadres);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ----------------------
+// 2) Récupérer les étudiants d’un cadre
+// ----------------------
+export const getCadreStudents = async (req, res) => {
+  try {
+    const { cadreId } = req.params;
+    const { cin, role } = req.body;
+    if (!cin || !role) {
+      return res.status(400).json({ message: "Informations utilisateur manquantes" });
+    }
+
+    const cadre = await Cadre.findByPk(cadreId, {
+      include: [{
+        model: Etudiant,
+        as: 'participants',
+        attributes: ['cin', 'promotion', 'filiere'],
+        through: { attributes: [] },
+        include: [{
+          model: Utilisateur,
+          as: 'base',
+          attributes: ['nom', 'prenom']
+        }]
+      }]
     });
-    res.status(200).json(evaluations);
-}
-
-export const getEvaluationforProf=async (req, res) => {
-    const id_prof = req.params.id_prof;
-    if (!id_prof) {
-        return res.status(400).json({ message: "CIN is required" });
+    if (!cadre) {
+      return res.status(404).json({ message: "Cadre introuvable" });
     }
-    const evaluations = await Evaluation.findAll({
-        where: {
-            cinEvaluateur: id_prof
-        },
-        include: [
-            {
-                model: Evaluation.sequelize.models.Utilisateur,
-                as: 'evaluateur',
-                attributes: ['nom', 'prenom','role'],
-            },
-            {
-                model: Evaluation.sequelize.models.Cadre,
-                as: 'cadre',
-                attributes: [ 'Nom']
-            },
-            {
-                model: Evaluation.sequelize.models.Competence,
-                as: 'competence',
-                attributes: ['Nom']
-            }
-        ]
-    })
-}
 
-export const createEvaluation = async (req, res) => {
-    try {
-        const { Score, Commentaire, Anonymat, cinEvaluateur, cinEvalué, id_cadre, id_competence } = req.body;
-        if (!Score || !cinEvaluateur || !cinEvalué || !id_cadre || !id_competence) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-        const date = Date.now();
-        console.log(date);
-
-        const inCadre= await Cadre.findByPk(id_cadre,{
-            include: [
-                {
-                    module: Cadre.sequelize.models.Competence,
-                    as: 'competences',
-                    attributes: ['id_Competence'],
-                },{
-                    module: Cadre.sequelize.models.Etudiant,
-                    as: 'participants',
-                    attributes: ['cin'],
-                },{
-                    module: Cadre.sequelize.models.Enseignant,
-                    as: 'superviseurs',
-                    attributes: ['cin'],
-                },{
-                    module: Cadre.sequelize.models.Professionnel,
-                    as: 'professionnel',
-                    attributes: ['cin'],
-                }
-            ]
-        });
-        if (!inCadre) {
-            return res.status(404).json({ message: "Cadre not found" });
-        }
-        if(!inCadre.participants.map(e => e.cin).includes(cinEvalué)){
-            return res.status(404).json({ message: "Etudiant not in cadre" });
-        }
-        if(!inCadre.superviseurs.map(e => e.cin).includes(cinEvaluateur)||!inCadre.professionnel.map(e => e.cin).includes(cinEvaluateur)){
-            return res.status(404).json({ message: "Enseignant or Professionnel not in cadre" });
-        }
-        if(!inCadre.competences.map(e => e.id_Competence).includes(id_competence)){
-            return res.status(404).json({ message: "Competence not in cadre" });
-        }
-        
-        const newEvaluation = await Evaluation.create({
-            date,
-            Score,
-            Commentaire,
-            Anonymat,
-            cinEvaluateur,
-            cinEvalué,
-            id_cadre,
-            id_competence
-        });
-        res.status(201).json(newEvaluation);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    if (!checkCadreAccess({ cin, role }, cadre)) {
+      return res.status(403).json({ message: "Accès refusé" });
     }
-}
+
+    return res.status(200).json(cadre.participants);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ----------------------
+// 3) Contexte d’évaluation
+// ----------------------
+export const getEvaluationContext = async (req, res) => {
+  try {
+    const { cadreId, cinEvaluateur, cinEvalue } = req.params;
+    const { cin, role } = req.body;
+    if (!cin || !role) {
+      return res.status(400).json({ message: "Informations utilisateur manquantes" });
+    }
+    if (cin !== cinEvaluateur) {
+      return res.status(403).json({ message: "Authentification invalide" });
+    }
+
+    let evaluationType;
+    if (cinEvaluateur === cinEvalue) {
+      evaluationType = 'auto';
+    } else if (role === 'etudiant') {
+      evaluationType = 'co';
+    } else {
+      evaluationType = 'supervisor';
+    }
+
+    const includes = [
+      {
+        model: Competence,
+        as: 'competences',
+        through: { attributes: [] },
+        include: [{
+          model: Indicateur,
+          as: 'indicateurs',
+          attributes: ['id_indicateur', 'indicateur']
+        }]
+      },
+      {
+        model: Etudiant,
+        as: 'participants',
+        where: { cin: cinEvalue },
+        required: true,
+        through: { attributes: [] },
+        include: [{
+          model: Utilisateur,
+          as: 'base',
+          attributes: ['nom', 'prenom']
+        }]
+      }
+    ];
+
+    if (evaluationType === 'supervisor') {
+      if (role === 'enseignant') {
+        includes.push({
+          model: Enseignant,
+          as: 'superviseurs',
+          where: { cin: cinEvaluateur },
+          required: true
+        });
+      } else {
+        includes.push({
+          model: Professionnel,
+          where: { cin: cinEvaluateur },
+          required: true
+        });
+      }
+    }
+
+    const cadre = await Cadre.findByPk(cadreId, { include: includes });
+    if (!cadre) {
+      return res.status(404).json({ message: "Contexte d'évaluation invalide" });
+    }
+
+    return res.status(200).json({
+      type: evaluationType,
+      competences: cadre.competences,
+      context: {
+        cadreId,
+        cinEvaluateur,
+        cinEvalue,
+        date: new Date().toISOString()
+      }
+    });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ----------------------
+// 4) Soumission d’évaluation
+// ----------------------
+export const submitEvaluation = async (req, res) => {
+  try {
+    const { cadreId, cinEvaluateur, cinEvalue } = req.params;
+    const {
+      id_competence,
+      score,
+      commentaire,
+      anonymat,
+      cin,
+      role
+    } = req.body;
+
+    if (!cin || !role) {
+      return res.status(400).json({ message: "Informations manquantes" });
+    }
+    if (cin !== cinEvaluateur) {
+      return res.status(403).json({ message: "Autorisation refusée" });
+    }
+    if (score == null || !id_competence) {
+      return res.status(400).json({ message: "Données manquantes" });
+    }
+
+    const isValid = await validateEvaluationSubmission(
+      { cin, role },
+      cadreId,
+      cinEvaluateur,
+      cinEvalue,
+      id_competence
+    );
+    if (!isValid) {
+      return res.status(403).json({ message: "Opération non autorisée" });
+    }
+
+    const evaluation = await Evaluation.create({
+      Date: new Date(),
+      Score: score,
+      Commentaire: commentaire,
+      Anonymat: anonymat,
+      cinEvaluateur,
+      cinEvalué: cinEvalue,
+      id_cadre: cadreId,
+      id_competence
+    });
+
+    return res.status(201).json(evaluation);
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
+};
+
+// ----------------------
+// 5) Validation métier
+// ----------------------
+const validateEvaluationSubmission = async (
+  user,
+  cadreId,
+  evaluateur,
+  evaluatee,
+  competenceId
+) => {
+  const cadre = await Cadre.findByPk(cadreId, {
+    include: [
+      {
+        model: Etudiant,
+        as: 'participants',
+        attributes: ['cin'],
+        through: { attributes: [] }
+      },
+      {
+        model: Enseignant,
+        as: 'superviseurs',
+        attributes: ['cin'],
+        required: false
+      },
+      {
+        model: Professionnel,
+        attributes: ['cin'],
+        required: false
+      },
+      {
+        model: Competence,
+        as: 'competences',
+        attributes: ['id_Competence'],
+        through: { attributes: [] }
+      }
+    ]
+  });
+  if (!cadre) return false;
+
+  if (!cadre.competences.some(c => c.id_Competence === competenceId)) {
+    return false;
+  }
+
+  if (evaluateur === evaluatee) {
+    return true;
+  }
+
+  if (user.role === 'etudiant') {
+    return (
+      cadre.participants.some(p => p.cin === evaluateur) &&
+      cadre.participants.some(p => p.cin === evaluatee)
+    );
+  }
+
+  if (user.role === 'enseignant') {
+    return cadre.superviseurs?.cin === evaluateur;
+  }
+
+  if (user.role === 'professionnel') {
+    return cadre.Professionnel?.cin === evaluateur;
+  }
+
+  return false;
+};
