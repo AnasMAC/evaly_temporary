@@ -68,8 +68,8 @@
               <td class="px-6 py-4">{{ professionnel.nom }} {{ professionnel.prenom }}</td>
               <td class="px-6 py-4 w-24">{{ professionnel.cin }}</td>
               <td class="px-6 py-4 w-64">{{ professionnel.email }}</td>
-              <td class="px-6 py-4">{{ professionnel.nomEntreprise }}</td>
-              <td class="px-6 py-4">{{ professionnel.domaineActivite }}</td>
+              <td class="px-6 py-4">{{ professionnel.professionnel.nomEntreprise }}</td>
+              <td class="px-6 py-4">{{ professionnel.professionnel.domaineActivite }}</td>
               <td class="px-6 py-4">
                 <button class="text-[#33488E] font-medium hover:text-[#2a3a73] mr-4" @click="editProfessional(professionnel)">EDIT</button>
                 <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="confirmDelete(professionnel.cin)">DELETE</button>
@@ -97,7 +97,7 @@ const professional = ref({
   email: '', 
   nomEntreprise: '', 
   domaineActivite: '',
-
+  role: 'professionnel' 
 });
 const isEditing = ref(false);
 const authStore = useAuthStore();
@@ -106,7 +106,6 @@ const administrateurId = ref(authStore.cin);  // À remplacer par l'ID de l'admi
 const fetchProfessionals = async () => {
   try {
     const response = await axios.get(`/api/professionnels/${administrateurId.value}`);
-    console.log(response.data);
     professionnels.value = response.data;
   } catch (error) {
     console.error("Erreur lors de la récupération des professionnels:", error);
@@ -118,7 +117,6 @@ const handleSubmit = async () => {
     if (isEditing.value) {
       await axios.put(`/api/professionnels/${administrateurId.value}`, professional.value);
     } else {
-      console.log("Enregistrement du professionnel:", professional.value);
       await axios.post(`/api/professionnels/${administrateurId.value}`, professional.value);
     }
     fetchProfessionals();

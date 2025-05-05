@@ -2,15 +2,15 @@
 
 export default {
   development: {
-    username: 'pc',
-    password: 'anas',
-    database: 'evalytest',
+    username: 'postgres',
+    password: 'said@@2022',
+    database: 'evalydb',
     host: '127.0.0.1',
     dialect: 'postgres',
   },
   test: {
     username: 'postgres',
-    password: 'said',
+    password: 'said@@2022',
     database: 'evalydb',
     host: '127.0.0.1',
     dialect: 'postgres',
