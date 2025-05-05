@@ -9,12 +9,27 @@
         <form @submit.prevent="ajouterEtudiant" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div>
             <label class="block font-medium mb-1">CIN</label>
-            <input v-model="formEtudiant.cin" placeholder="CIN de l'étudiant" required class="w-full p-2 border border-gray-300 rounded-lg" />
+            <input
+              v-model="formEtudiant.cin"
+              placeholder="CIN de l'étudiant"
+              required
+              class="w-full p-2 border border-gray-300 rounded-lg"
+            />
           </div>
           <div class="col-span-2 flex items-end">
-            <button type="submit" class="btn-orange py-2 px-8 rounded-lg font-medium w-full">Ajouter</button>
+            <button
+              type="submit"
+              :disabled="isLoading"
+              class="btn-orange py-2 px-8 rounded-lg font-medium w-full flex justify-center items-center"
+            >
+              <span v-if="isLoading" class="loader mr-2"></span>
+              <span>{{ isLoading ? 'Ajout...' : 'Ajouter' }}</span>
+            </button>
           </div>
         </form>
+        <p v-if="message" :class="{'text-green-600': isSuccess, 'text-red-600': !isSuccess}" class="mt-4 text-sm font-medium text-center">
+          {{ message }}
+        </p>
       </div>
 
       <!-- Liste des étudiants -->
@@ -25,22 +40,28 @@
             <tr>
               <th class="px-6 py-3 uppercase font-medium">Nom et Prénom</th>
               <th class="px-6 py-3 uppercase font-medium">CIN</th>
-              <th class="px-6 py-3 uppercase font-medium">Email</th>
-              <th class="px-6 py-3 uppercase font-medium">Filière</th>
-              <th class="px-6 py-3 uppercase font-medium">Actions</th>
+              <th class="px-6 py-3 uppercase font-medium">EMAIL</th>
+              <th class="px-6 py-3 uppercase font-medium">FILIÈRE</th>
+              <th class="px-6 py-3 uppercase font-medium">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="etudiant in etudiants" :key="etudiant.cin" :class="[(etudiants.indexOf(etudiant) % 2 === 0 ? 'bg-[#FFF7F0]' : 'bg-[#F7F7F7]'), 'border-b', 'border-[#444]']">
+            <tr
+              v-for="etudiant in etudiants"
+              :key="etudiant.cin"
+              :class="[(etudiants.indexOf(etudiant) % 2 === 0 ? 'bg-[#FFF7F0]' : 'bg-[#F7F7F7]'), 'border-b', 'border-[#444]']"
+            >
               <td class="px-6 py-4 flex items-center gap-2">
                 <img :src="etudiant.photo" alt="avatar" class="w-8 h-8 rounded-full" />
-                {{ etudiant.nom }}
+                {{ etudiant.nom }} {{ etudiant.prenom }}
               </td>
               <td class="px-6 py-4">{{ etudiant.cin }}</td>
               <td class="px-6 py-4">{{ etudiant.email }}</td>
               <td class="px-6 py-4">{{ etudiant.filiere }}</td>
               <td class="px-6 py-4">
-                <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="supprimerEtudiant(etudiant.cin)">DELETE</button>
+                <button class="text-[#E3873A] font-medium hover:text-[#e67e3a]" @click="supprimerEtudiant(etudiant.cin)">
+                  DELETE
+                </button>
               </td>
             </tr>
             <tr v-if="etudiants.length === 0">
@@ -59,82 +80,96 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 
 const route = useRoute()
-const idCadre = route.params.idCadre
-
+const idCadre = route.params.id
 const nomCadre = ref('')
 const formEtudiant = ref({ cin: '' })
 const etudiants = ref([])
+const isLoading = ref(false)
+const message = ref('')
+const isSuccess = ref(true)
 
-// Charger le nom du cadre
-const chargerNomCadre = async () => {
+// Récupère les infos du cadre + les participants
+const chargerCadreEtEtudiants = async () => {
   try {
-    const response = await axios.get(`/api/cadre/${idCadre}`)
-    nomCadre.value = response.data.Nom
+    const response = await axios.get(`http://localhost:3000/api/cadre/${idCadre}`)
+    const data = response.data
+
+    nomCadre.value = data.Nom || 'Nom du cadre inconnu'
+
+    if (Array.isArray(data.participants)) {
+      etudiants.value = data.participants.map(p => ({
+        cin: p.cin,
+        nom: p.base.nom,
+        prenom:p.base.prenom, // nom inconnu
+        email: p.base.email,  // non disponible
+        filiere: p.filiere || 'Non précisé',
+        photo: '/src/assets/profile.jpg'
+      }))
+    }
   } catch (error) {
-    console.error('Erreur API:', error)
-    alert("Erreur lors de la récupération du cadre.")
+    console.error('Erreur chargement cadre :', error)
+    message.value = "Erreur lors du chargement du cadre."
+    isSuccess.value = false
   }
 }
 
-// Ajouter un étudiant
+// Ajout d’un étudiant
 const ajouterEtudiant = async () => {
-  const cin = formEtudiant.value.cin.trim().toUpperCase()
+  const cin = formEtudiant.value.cin.trim()
   if (!cin) {
-    alert("CIN est requis.")
+    message.value = "CIN est requis."
+    isSuccess.value = false
     return
   }
 
+  if (etudiants.value.find(e => e.cin === cin)) {
+    message.value = "Cet étudiant est déjà dans le cadre."
+    isSuccess.value = false
+    return
+  }
+
+  isLoading.value = true
+  message.value = ''
+
   try {
-    // Vérifier si l'étudiant existe
-    const response = await axios.get(`/api/student/cin/${cin}`)
-    const data = response.data
+    console.log("Ajout étudiant avec CIN :", cin)
+    await axios.post(`http://localhost:3000/api/cadre/${idCadre}/etudiant/${cin}`)
 
-    // Vérifier si déjà ajouté
-    const existe = etudiants.value.find(e => e.cin === data.cin)
-    if (existe) {
-      alert("Cet étudiant est déjà ajouté.")
-      return
-    }
+    // Recharge la liste après ajout
+    await chargerCadreEtEtudiants()
 
-    // Associer étudiant au cadre
-    await axios.post(`/api/cadre/${idCadre}/etudiant/${data.cin}`)
-
-    // Ajouter dans le tableau
-    const nouvelEtudiant = {
-      cin: data.cin,
-      nom: `${data.nom} ${data.prenom || ''}`,
-      email: data.email,
-      filiere: data.filiere || 'Non précisé',
-      photo: data.photo || '/src/assets/profile.jpg'
-    }
-    etudiants.value.push(nouvelEtudiant)
     formEtudiant.value.cin = ''
-
+    message.value = "Étudiant ajouté avec succès."
+    isSuccess.value = true
   } catch (error) {
-    if (error.response && error.response.status === 404) {
-      alert("Cet étudiant n'existe pas dans notre base de données.")
-    } else {
-      console.error('Erreur API:', error)
-      alert("Erreur de connexion au serveur.")
-    }
+    console.error("Erreur ajout :", error)
+    message.value = "Erreur lors de l'ajout."
+    isSuccess.value = false
+  } finally {
+    isLoading.value = false
   }
 }
 
-// Supprimer un étudiant
+// Suppression
 const supprimerEtudiant = async (cin) => {
-  if (!confirm("Êtes-vous sûr de vouloir supprimer cet étudiant ?")) return
+  if (!confirm("Confirmer la suppression ?")) return
 
   try {
-    await axios.delete(`/api/cadre/${idCadre}/etudiant/${cin}`)
-    etudiants.value = etudiants.value.filter(e => e.cin !== cin)
+    await axios.delete(`http://localhost:3000/api/cadre/${idCadre}/etudiant/${cin}`)
+    await chargerCadreEtEtudiants()
+    message.value = "Étudiant supprimé avec succès."
+    isSuccess.value = true
   } catch (error) {
-    console.error('Erreur API suppression:', error)
-    alert("Erreur lors de la suppression de l'étudiant.")
+    console.error("Erreur suppression :", error)
+    message.value = "Erreur lors de la suppression."
+    isSuccess.value = false
   }
 }
 
+// Initialisation au montage
 onMounted(() => {
-  chargerNomCadre()
+  console.log("Chargement du cadre ID:", idCadre)
+  chargerCadreEtEtudiants()
 })
 </script>
 
@@ -155,7 +190,11 @@ input:focus {
   color: white;
   transition: box-shadow 0.2s, transform 0.2s;
 }
-.btn-orange:hover {
+.btn-orange:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.btn-orange:hover:enabled {
   box-shadow: 0 4px 18px rgba(227, 135, 58, 0.18);
   transform: translateY(-2px);
   background-color: #e67e3a;
@@ -167,8 +206,18 @@ input:focus {
 table button {
   background: none;
   border: none;
-  color: #2563eb;
   font-weight: 500;
   cursor: pointer;
+}
+.loader {
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 </style>
