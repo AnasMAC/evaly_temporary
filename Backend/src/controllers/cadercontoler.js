@@ -1,5 +1,6 @@
+import e from 'express';
 import db from '../models/index.js';
-const { Cadre, Etudiant, Enseignant, Professionnel,Competence,etudiant_cadre,sequelize} = db;
+const { Cadre, Etudiant, Enseignant, Professionnel,Competence,Utilisateur,Indicateur,sequelize} = db;
 
 export const addCadre = async (req, res) => {
   const {
@@ -49,7 +50,7 @@ export const addCadre = async (req, res) => {
 
       // 4. Association selon le type trouvé
       if (enseignant) {
-          await cadre.addSuperviseur(enseignant, { transaction: t });
+          await cadre.setSuperviseurs(enseignant, { transaction: t });
       } else {
           await cadre.setProfessionnel(professionnel, { transaction: t });
       }
@@ -58,10 +59,31 @@ export const addCadre = async (req, res) => {
 
       // 5. Récupération du cadre complet
       const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-          include: [
-              { model: Enseignant, as: 'superviseurs' },
-              { model: Professionnel, as: 'Professionnel' }
-          ]
+        include: [
+            {
+              model: Etudiant,
+              as: 'participants',
+              attributes: { exclude: ['promotion'] },
+              through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+              include: [{
+                  model: Utilisateur,
+                  as: 'base',
+                  attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+              }]
+            },
+            { 
+              model: Competence, 
+              as: 'competences' ,
+              attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+              through:{attributes:[]},
+              include:[{
+                model:Indicateur,
+                as:'indicateurs',
+                attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+              }]
+              
+             },
+        ]
       });
 
       return res.status(201).json(fullCadre);
@@ -91,13 +113,14 @@ export const deleteCadre = async(req,res)=>{
 }
 
 export const updateCadre=async(req,res)=>{
+  const t = await sequelize.transaction();
     try {
-        const t = await sequelize.transaction();
+        
         const cadre = await Cadre.findByPk(req.params.id_cadre);
         if (!cadre) {
             return res.status(404).json({ message: 'Cadre introuvable.' });
         }
-        const { Nom, Frequence_evaluation, Date_debut, Date_fin, Description } = req.body;
+        const { Nom,Type, Frequence_evaluation, Date_debut, Date_fin, Description } = req.body;
         if (!Nom || !Frequence_evaluation || !Date_debut || !Date_fin) {
             return res.status(400).json({ message: 'Tous les champs sont obligatoires.' });
         }
@@ -109,33 +132,48 @@ export const updateCadre=async(req,res)=>{
         if (cadre.Date_fin < new Date()) {
             return res.status(400).json({ message: 'Impossible de modifier un cadre déjà terminé.' });
         }
-        await cadre.update({ Nom, Frequence_evaluation, Date_debut, Date_fin, Description }, { transaction: t });
-        const { id_Enseignant, id_Professionnel} = req.body;
-        if(id_Enseignant){
-            const enseignant = await Enseignant.findByPk(id_Enseignant, { transaction: t });
-            if (!enseignant) {
-                await t.rollback();
-                return res.status(404).json({ message: 'Enseignant introuvable.' });
-            }
-            await cadre.addSuperviseur(enseignant, { transaction: t });
-        }
+        await cadre.update({ Nom,Type, Frequence_evaluation, Date_debut, Date_fin, Description }, { transaction: t });
+        const {id_Enseignant} = req.body;
+        let enseignant = await Enseignant.findByPk(id_Enseignant, { transaction: t });
+        let professionnel = await Professionnel.findByPk(id_Enseignant, { transaction: t });
 
-        if(id_Professionnel){
-            const professionnel = await Professionnel.findByPk(id_Professionnel, { transaction: t });
-            if (!professionnel) {
-                await t.rollback();
-                return res.status(404).json({ message: 'Professionnel introuvable.' });
-            }
+              // Supprimer les anciens superviseurs enseignants
+        await cadre.setSuperviseurs(null, { transaction: t }); // remove all current teachers
+        await cadre.setProfessionnel(null, { transaction: t }); // remove professional if exists
+
+        // Associer le nouveau superviseur
+        if (enseignant) {
+            await cadre.setSuperviseurs(enseignant, { transaction: t });
+        } else {
             await cadre.setProfessionnel(professionnel, { transaction: t });
         }
         await t.commit();
         const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-            include: [
-                { model: Enseignant, as: 'superviseurs' },
-                { model: Professionnel, as: 'Professionnel' },
-                { model: Etudiant, as: 'participants' },
-                { model: Competence, as: 'competences' }
-            ]
+          include: [
+              {
+                model: Etudiant,
+                as: 'participants',
+                attributes: { exclude: ['promotion'] },
+                through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                include: [{
+                    model: Utilisateur,
+                    as: 'base',
+                    attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                }]
+              },
+              { 
+                model: Competence, 
+                as: 'competences' ,
+                attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                through:{attributes:[]},
+                include:[{
+                  model:Indicateur,
+                  as:'indicateurs',
+                  attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                }]
+                
+               },
+          ]
         });
         return res.status(200).json(fullCadre);
     }catch(error){
@@ -149,12 +187,31 @@ export const updateCadre=async(req,res)=>{
 export const getAllCadres = async (req, res) => {
     try {
         const cadres = await Cadre.findAll({
-            include: [
-                { model: Enseignant, as: 'superviseurs' },
-                { model: Professionnel, as: 'Professionnel' },
-                { model: Etudiant, as: 'participants' },
-                { model: Competence, as: 'competences' }
-            ]
+          include: [
+              {
+                model: Etudiant,
+                as: 'participants',
+                attributes: { exclude: ['promotion'] },
+                through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                include: [{
+                    model: Utilisateur,
+                    as: 'base',
+                    attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                }]
+              },
+              { 
+                model: Competence, 
+                as: 'competences' ,
+                attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                through:{attributes:[]},
+                include:[{
+                  model:Indicateur,
+                  as:'indicateurs',
+                  attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                }]
+                
+               },
+          ]
         });
         return res.status(200).json(cadres);
     } catch (error) {
@@ -166,10 +223,29 @@ export const getCadreById = async (req, res) => {
     try {
         const cadre = await Cadre.findByPk(req.params.id_cadre, {
             include: [
-                { model: Enseignant, as: 'superviseurs' },
-                { model: Professionnel, as: 'Professionnel' },
-                { model: Etudiant, as: 'participants' },
-                { model: Competence, as: 'competences' }
+                {
+                  model: Etudiant,
+                  as: 'participants',
+                  attributes: { exclude: ['promotion'] },
+                  through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                  include: [{
+                      model: Utilisateur,
+                      as: 'base',
+                      attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                  }]
+                },
+                { 
+                  model: Competence, 
+                  as: 'competences' ,
+                  attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                  through:{attributes:[]},
+                  include:[{
+                    model:Indicateur,
+                    as:'indicateurs',
+                    attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                  }]
+                  
+                 },
             ]
         });
         if (!cadre) {
@@ -194,13 +270,32 @@ export const ajouterEtudiant = async (req, res) => {
       }
       await cadre.addParticipants(etudiant);
       const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-        include: [
-          { model: Enseignant, as: 'superviseurs' },
-          { model: Professionnel, as: 'Professionnel' },
-          { model: Etudiant, as: 'participants' },
-          { model: Competence, as: 'competences' }
-        ]
-      });
+            include: [
+                {
+                  model: Etudiant,
+                  as: 'participants',
+                  attributes: { exclude: ['promotion'] },
+                  through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                  include: [{
+                      model: Utilisateur,
+                      as: 'base',
+                      attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                  }]
+                },
+                { 
+                  model: Competence, 
+                  as: 'competences' ,
+                  attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                  through:{attributes:[]},
+                  include:[{
+                    model:Indicateur,
+                    as:'indicateurs',
+                    attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                  }]
+                  
+                 },
+            ]
+        });
       return res.status(200).json(fullCadre);
     } catch (error) {
         console.error(error);
@@ -224,12 +319,31 @@ export const supprimerEtudiant = async (req, res) => {
     }
     await cadre.removeParticipants(participant);
     const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-      include: [
-        { model: Enseignant, as: 'superviseurs' },
-        { model: Professionnel, as: 'Professionnel' },
-        { model: Etudiant, as: 'participants' },
-        { model: Competence, as: 'competences' }
-      ]
+            include: [
+                {
+                  model: Etudiant,
+                  as: 'participants',
+                  attributes: { exclude: ['promotion'] },
+                  through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                  include: [{
+                      model: Utilisateur,
+                      as: 'base',
+                      attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                  }]
+                },
+                { 
+                  model: Competence, 
+                  as: 'competences' ,
+                  attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                  through:{attributes:[]},
+                  include:[{
+                    model:Indicateur,
+                    as:'indicateurs',
+                    attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                  }]
+                  
+                 },
+            ]
     });
     return res.status(200).json(fullCadre);
   }catch(error){
@@ -246,7 +360,7 @@ export const ajouterCompetence = async (req, res) => {
     }
     const { competence,categorie} = req.body;
     const competences = await Competence.findAll({
-      where: { Nom: competence ,Categorie:categorie}
+      where: { Nom: competence }
     });
     if(!competences || competences.length === 0) {
       return res.status(404).json({ message: 'Competence introuvable.' });
@@ -254,12 +368,31 @@ export const ajouterCompetence = async (req, res) => {
     
     await cadre.addCompetences(competences);
     const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-      include: [
-        { model: Enseignant, as: 'superviseurs' },
-        { model: Professionnel, as: 'Professionnel' },
-        { model: Etudiant, as: 'participants' },
-        { model: Competence, as: 'competences' }
-      ]
+            include: [
+                {
+                  model: Etudiant,
+                  as: 'participants',
+                  attributes: { exclude: ['promotion'] },
+                  through: { attributes: [] }, // 👈 Exclude etudiant_cadre (through table)
+                  include: [{
+                      model: Utilisateur,
+                      as: 'base',
+                      attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                  }]
+                },
+                { 
+                  model: Competence, 
+                  as: 'competences' ,
+                  attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                  through:{attributes:[]},
+                  include:[{
+                    model:Indicateur,
+                    as:'indicateurs',
+                    attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                  }]
+                  
+                 },
+            ]
     });
     return res.status(200).json(fullCadre);
   }catch(error){
@@ -279,18 +412,36 @@ export const supprimerCompetence = async (req, res) => {
     const competences = await cadre.getCompetences({
       where: { id_Competence: competence }
     });
-    console.log(competences);
     if (!competences|| competences.length === 0) {
       return res.status(404).json({ message: 'Competence introuvable.' });
     }
     await cadre.removeCompetences(competences);
     const fullCadre = await Cadre.findByPk(cadre.id_cadre, {
-      include: [
-        { model: Enseignant, as: 'superviseurs' },
-        { model: Professionnel, as: 'Professionnel' },
-        { model: Etudiant, as: 'participants' },
-        { model: Competence, as: 'competences' }
-      ]
+            include: [
+                {
+                  model: Etudiant,
+                  as: 'participants',
+                  attributes: { exclude: ['promotion'] },
+                  through: { attributes: [] }, 
+                  include: [{
+                      model: Utilisateur,
+                      as: 'base',
+                      attributes: { exclude: ['role', 'administrateurId', 'pwd', 'cin'] }
+                  }]
+                },
+                { 
+                  model: Competence, 
+                  as: 'competences' ,
+                  attributes: { exclude: ['id_Competence','Descreption','createdAt','updatedAt',] },
+                  through:{attributes:[]},
+                  include:[{
+                    model:Indicateur,
+                    as:'indicateurs',
+                    attributes: { exclude: ['id_indicateur','createdAt','updatedAt'] },
+                  }]
+                  
+                 },
+            ]
     });
     return res.status(200).json(fullCadre);
   }catch(error){

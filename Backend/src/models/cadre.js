@@ -11,11 +11,11 @@ class Cadre extends Model {
             }
         });
         this.belongsTo(models.Professionnel),
-        this.belongsToMany(models.Enseignant, {
-            through: 'enseignant_cadre',
+        this.belongsTo(models.Enseignant, {
             as: 'superviseurs',
             foreignKey: {
-                name: 'id_cadre',
+                name: 'cinEnseignant',
+                allowNull: true
             }
         });
         this.belongsToMany(models.Competence, {

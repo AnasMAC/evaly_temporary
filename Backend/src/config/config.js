@@ -4,7 +4,7 @@ export default {
   development: {
     username: 'pc',
     password: 'anas',
-    database: 'evalytest',
+    database: 'test3',
     host: '127.0.0.1',
     dialect: 'postgres',
   },
