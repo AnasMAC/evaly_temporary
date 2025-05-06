@@ -4,7 +4,7 @@ import sequelize from './db.js';
 class Indicateur extends Model {
     static associate(models) {
         this.belongsTo(models.Competence, {
-        foreignKey: 'id_indicateur',
+        foreignKey: 'id_competence',
         as: 'competence'
         });
     }   
